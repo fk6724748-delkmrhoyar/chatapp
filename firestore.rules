@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Reusable primitive definitions
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isOwner(userId) { return request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Admins Collection
+    match /admins/{userId} {
+      allow read: if isSignedIn();
+      // First person to sign up can make themselves an admin if no admins exist
+      // Or an existing admin can write there
+      // Wait, no easy way to check if collection is empty from rules (costly to get() list)
+      // Actually, standard rule: Only admins can write to admins, but we'll manually bootstrap if needed,
+      // or we can just allow read to everyone to see if they are admin.
+      allow write: if isAdmin() || request.auth.token.email == "umarwebstore@gmail.com";
+      // Auto-assign admin if email matches user
+    }
+
+    // 2. Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      
+      // Validation helper for User
+      function isValidUser(data) {
+        return (
+          data.email is string && data.email.size() <= 200 &&
+          data.displayName is string && data.displayName.size() <= 100
+        );
+      }
+      
+      allow create: if isSignedIn() && isOwner(userId) && isValidUser(incoming());
+      
+      allow update: if isSignedIn() && (
+        isOwner(userId) || isAdmin()
+      ) && isValidUser(incoming());
+      
+      allow delete: if isAdmin();
+    }
+
+    // 3. Chats Collection
+    match /chats/{chatId} {
+      // Chat members are an array for simplicity because we need `array-contains` queries.
+      // E.g., `chats` where `members array-contains request.auth.uid`.
+      // We will bound members to <= 256 for groups.
+      function isMember() {
+        return request.auth.uid in existing().members;
+      }
+      function incomingIsMember() {
+        return request.auth.uid in incoming().members;
+      }
+      
+      allow read: if isSignedIn() && (isMember() || isAdmin());
+      
+      allow create: if isSignedIn() && incomingIsMember() && 
+                    incoming().members is list && incoming().members.size() <= 256;
+                    
+      allow update: if isSignedIn() && (isMember() || isAdmin());
+      allow delete: if isAdmin();
+      
+      // Messages Subcollection
+      match /messages/{messageId} {
+        function parentChat() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data;
+        }
+        function isChatMember() {
+          return request.auth.uid in parentChat().members;
+        }
+        
+        allow read: if isSignedIn() && (isChatMember() || isAdmin());
+        
+        allow create: if isSignedIn() && (isChatMember() || isAdmin()) &&
+                      incoming().senderId == request.auth.uid &&
+                      incoming().text is string && incoming().text.size() <= 5000;
+                      
+        allow update: if false; // Messages are immutable for now
+        allow delete: if isAdmin() || (isSignedIn() && existing().senderId == request.auth.uid);
+      }
+    }
+  }
+}

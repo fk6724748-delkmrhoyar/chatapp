@@ -1,0 +1,6 @@
+{
+  "name": "Umar Chat",
+  "description": "A real-time chatting application featuring text messaging, a responsive layout, and an admin panel.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

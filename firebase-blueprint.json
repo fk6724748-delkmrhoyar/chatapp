@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "photoURL": { "type": "string", "description": "Avatar URL" },
+        "isAdmin": { "type": "boolean", "description": "Whether the user is an admin" },
+        "createdAt": { "type": "string", "description": "Timestamp of creation" }
+      },
+      "required": ["email", "displayName", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "A chat room (direct or group)",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["direct", "group"] },
+        "name": { "type": "string", "description": "Group name (empty for direct)" },
+        "createdAt": { "type": "string" },
+        "createdBy": { "type": "string", "description": "Creator UID" },
+        "recentMessage": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["type", "createdAt", "createdBy"]
+    },
+    "ChatMember": {
+      "title": "Chat Member",
+      "description": "A member of a chat",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "member"] },
+        "joinedAt": { "type": "string" }
+      },
+      "required": ["userId", "role", "joinedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A chat message",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["image", "video", "audio", "none"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["senderId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Global user profiles"
+    },
+    "chats/{chatId}": {
+      "schema": { "$ref": "#/entities/Chat" },
+      "description": "Chat sessions"
+    },
+    "chats/{chatId}/members/{memberId}": {
+      "schema": { "$ref": "#/entities/ChatMember" },
+      "description": "Members of a chat"
+    },
+    "chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Messages within a chat"
+    }
+  }
+}
