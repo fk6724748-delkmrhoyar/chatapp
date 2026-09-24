@@ -1,0 +1,13 @@
+<%- include('partials/head', { title: title, me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/settings" class="icon-btn">←</a><h1 style="font-size:18px">Support Center</h1></div>
+<% if (query.ok !== undefined) { %><div class="alert success-bg" style="margin:14px;max-width:none">Ticket sent.</div><% } %>
+<form method="post" style="padding:20px">
+<input class="input" name="title" placeholder="Title" required style="margin-bottom:8px">
+<textarea class="input" name="description" placeholder="Describe your issue" rows="4" required></textarea>
+<button class="btn" style="margin-top:10px">Send ticket</button>
+</form>
+<div style="padding:10px 14px;font-weight:700">My tickets</div>
+<% if (!tickets.length) { %><div class="empty">No tickets yet.</div><% } %>
+<% tickets.forEach(function(t){ %><div style="padding:14px;border-bottom:1px solid var(--border)"><strong><%= e(t.title) %></strong><br><small><%= e(t.status) %> · <%= t.created_at %></small><p style="margin-top:8px"><%- nl2brLinkify(t.description) %></p><% if (t.reply) { %><div style="background:var(--primary-soft);padding:10px;border-radius:8px;margin-top:8px"><strong>Admin reply</strong><br><%- nl2brLinkify(t.reply) %></div><% } %></div><% }); %>
+</div></body></html>
