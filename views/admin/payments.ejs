@@ -1,0 +1,9 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">Payment methods</h1></div>
+<form method="post" action="/ckmr/payments" style="padding:20px">
+<label><div style="color:var(--muted);font-size:12px">EasyPaisa</div><input class="input" name="easypaisa" value="<%= e(setting('easypaisa')) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">JazzCash</div><input class="input" name="jazzcash" value="<%= e(setting('jazzcash')) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">Binance</div><input class="input" name="binance" value="<%= e(setting('binance')) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">Blue tick price</div><input class="input" name="verify_price" value="<%= e(setting('verify_price','500 PKR')) %>" style="margin-bottom:10px"></label>
+<button class="btn">Save</button>
+</form></div></body></html>

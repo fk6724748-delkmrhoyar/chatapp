@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">Channels</h1></div>
+<form class="search" method="get" action="/ckmr/channels"><span>🔍</span><input name="q" value="<%= e(q) %>" placeholder="Search channel"></form>
+<% chans.forEach(function(c){ %><div class="chat-item"><div class="avatar">📢</div><div class="chat-meta"><div class="chat-name"><%= e(c.name) %><% if (c.blue_tick) { %> <%- blueTickHtml() %><% } %><% if (c.banned) { %> <span class="danger">[BANNED]</span><% } %></div><div class="chat-preview">Owner: <%= e(c.owner_email) %></div></div>
+<div class="chat-side"><% if (c.banned) { %><a href="/ckmr/channels?unban=<%= c.id %>" class="link">Unban</a><% } else { %><a href="/ckmr/channels?ban=<%= c.id %>" class="danger">Ban</a><% } %></div></div>
+<% }); %></div></body></html>

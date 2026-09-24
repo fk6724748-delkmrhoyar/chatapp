@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">Blue tick system</h1></div>
+<form method="post" action="/ckmr/verify" style="padding:20px;background:var(--primary-soft);margin:14px;border-radius:10px">
+<select class="input" name="type" style="margin-bottom:8px"><option value="user">User</option><option value="channel">Channel</option></select>
+<input class="input" name="target_id" placeholder="User/Channel ID" required style="margin-bottom:8px">
+<select class="input" name="duration" style="margin-bottom:8px"><option value="1m">1 month</option><option value="3m">3 months</option><option value="6m">6 months</option><option value="perm">Permanent</option></select>
+<button class="btn">Grant blue tick</button>
+</form>
+<h3 style="padding:14px">Verified users</h3>
+<% users.forEach(function(u){ %><div class="chat-item"><div class="avatar"><%= String(u.email).charAt(0).toUpperCase() %></div><div class="chat-meta"><div class="chat-name"><%= e(u.name || u.email) %> <%- blueTickHtml() %></div><div class="chat-preview">Expires: <%= u.blue_tick_expires || 'Permanent' %></div></div><div class="chat-side"><a href="/ckmr/verify?remove_u=<%= u.id %>" class="danger">Remove</a></div></div><% }); %>
+<h3 style="padding:14px">Verified channels</h3>
+<% chans.forEach(function(c){ %><div class="chat-item"><div class="avatar">📢</div><div class="chat-meta"><div class="chat-name"><%= e(c.name) %> <%- blueTickHtml() %></div></div><div class="chat-side"><a href="/ckmr/verify?remove_c=<%= c.id %>" class="danger">Remove</a></div></div><% }); %>
+</div></body></html>

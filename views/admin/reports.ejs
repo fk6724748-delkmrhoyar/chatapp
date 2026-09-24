@@ -1,0 +1,4 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">Reports</h1></div>
+<% rows.forEach(function(r){ %><div style="padding:14px;border-bottom:1px solid var(--border)">Reporter: <strong><%= e(r.reporter) %></strong><br>Target: <strong><%= e(r.target) %></strong> (<%= r.target_type %>)<br><p style="margin-top:8px"><%- nl2brLinkify(r.reason) %></p><small><%= r.created_at %></small></div><% }); %>
+</div></body></html>

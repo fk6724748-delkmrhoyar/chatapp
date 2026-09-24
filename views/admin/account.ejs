@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">Admin account</h1></div>
+<form method="post" action="/ckmr/account" style="padding:20px">
+<label><div style="color:var(--muted);font-size:12px">Username</div><input class="input" name="username" value="<%= e(a.username) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">Email</div><input class="input" name="email" value="<%= e(a.email) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">New password (leave blank to keep)</div><input class="input" type="password" name="password" style="margin-bottom:10px"></label>
+<button class="btn">Save</button>
+</form>
+<a href="/ckmr/logout" class="list-row danger"><span class="ico">⎋</span><div class="lr-title">Logout</div></a>
+</div></body></html>

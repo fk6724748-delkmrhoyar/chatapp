@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">Broadcast</h1></div>
+<% if (sent) { %><div style="padding:14px;background:#dcfce7;margin:14px;border-radius:8px">Sent</div><% } %>
+<form method="post" action="/ckmr/broadcast" enctype="multipart/form-data" style="padding:20px">
+<select class="input" name="target" style="margin-bottom:10px" onchange="document.getElementById('uid').style.display=this.value==='user'?'block':'none'">
+<option value="all">All users</option><option value="user">Specific user (ID)</option></select>
+<input id="uid" class="input" name="user_id" placeholder="User ID" style="display:none;margin-bottom:10px">
+<textarea class="input" name="body" rows="4" placeholder="Message"></textarea>
+<div style="margin-top:10px">
+  <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Image (optional)</div>
+  <input class="input" type="file" name="attachment" accept="image/*">
+</div>
+<button class="btn" style="margin-top:14px">Send broadcast</button>
+</form></div></body></html>

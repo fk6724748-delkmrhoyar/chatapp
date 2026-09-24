@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn">←</a><h1 style="font-size:18px">App settings</h1></div>
+<% if (query.ok) { %><div class="alert" style="margin:10px 20px;background:#e6f9ee;color:#0a7a3f">Saved.</div><% } %>
+<% if (test_msg) { %><div class="alert" style="margin:10px 20px;background:#eef3ff;color:#0b3a99"><%= e(test_msg) %></div><% } %>
+
+<form method="post" action="/ckmr/settings" enctype="multipart/form-data" style="padding:20px">
+<label><div style="color:var(--muted);font-size:12px">App name</div><input class="input" name="app_name" value="<%= e(setting('app_name')) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">App logo</div><input type="file" name="app_logo" class="input" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">Support Center link</div><input class="input" name="support_link" value="<%= e(setting('support_link','support.php')) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">Broadcast sender name</div><input class="input" name="broadcast_name" value="<%= e(setting('broadcast_name')) %>" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">Broadcast sender logo</div><input type="file" name="broadcast_logo" class="input" style="margin-bottom:10px"></label>
+
+<h2 style="margin:24px 0 10px;font-size:16px">SMTP (OTP email)</h2>
+<p style="color:var(--muted);font-size:12px;margin:0 0 10px">Hostinger SMTP is ready by default: host <b>smtp.hostinger.com</b>, port <b>465</b>, security <b>ssl</b>. Add the mailbox password once, save, then send a test OTP. From email should stay the same as SMTP Username. For Gmail inbox, check Spam/Promotions once and mark it Not spam.</p>
+
+<label><div style="color:var(--muted);font-size:12px">SMTP Host</div><input class="input" name="smtp_host" value="<%= e(setting('smtp_host','smtp.hostinger.com')) %>" placeholder="smtp.hostinger.com" style="margin-bottom:10px"></label>
+<div style="display:flex;gap:10px">
+  <label style="flex:1"><div style="color:var(--muted);font-size:12px">Port</div><input class="input" name="smtp_port" value="<%= e(setting('smtp_port','465')) %>" placeholder="465" style="margin-bottom:10px"></label>
+  <label style="flex:1"><div style="color:var(--muted);font-size:12px">Security</div>
+    <select class="input" name="smtp_secure" style="margin-bottom:10px">
+      <% var sec=setting('smtp_secure','ssl'); var secOpts={ssl:'SSL (465)',tls:'TLS (587)',none:'None'}; %>
+      <% Object.keys(secOpts).forEach(function(k){ %>
+        <option value="<%= e(k) %>" <%= sec===k ? 'selected' : '' %>><%= e(secOpts[k]) %></option>
+      <% }); %>
+    </select>
+  </label>
+</div>
+<label><div style="color:var(--muted);font-size:12px">SMTP Username</div><input class="input" name="smtp_user" value="<%= e(setting('smtp_user','support@777sc.site')) %>" placeholder="support@777sc.site" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">SMTP Password <% if (setting('smtp_pass')) { %><span style="color:#0a7a3f">(saved — leave blank to keep)</span><% } %></div><input class="input" type="password" name="smtp_pass" value="" placeholder="Mailbox password" style="margin-bottom:10px" autocomplete="new-password"></label>
+<label><div style="color:var(--muted);font-size:12px">From email</div><input class="input" name="smtp_from" value="<%= e(setting('smtp_from','support@777sc.site')) %>" placeholder="support@777sc.site" style="margin-bottom:10px"></label>
+<label><div style="color:var(--muted);font-size:12px">From name</div><input class="input" name="smtp_from_name" value="<%= e(setting('smtp_from_name',setting('app_name','CK Chat'))) %>" style="margin-bottom:14px"></label>
+
+<button class="btn">Save</button>
+  <h2 style="margin:10px 0;font-size:16px">Send test OTP email</h2>
+  <input class="input" type="email" name="test_email" placeholder="recipient@example.com" style="margin-bottom:10px">
+  <button class="btn" name="send_test_smtp" value="1" style="background:#0a7a3f">Save & send test email</button>
+</form>
+
+</div></body></html>

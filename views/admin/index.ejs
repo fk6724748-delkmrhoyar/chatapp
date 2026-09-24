@@ -1,0 +1,19 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Admin · CK Chat</title><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><h1>Admin Dashboard</h1><div class="icons"><a href="/ckmr/logout" class="icon-btn">⎋</a></div></div>
+<div style="padding:14px;display:grid;gap:12px">
+<div style="background:var(--primary-soft);padding:18px;border-radius:12px"><div style="color:var(--muted);font-size:12px">Total Users</div><div style="font-size:28px;font-weight:700;color:var(--primary)"><%= totalUsers %></div></div>
+<div style="background:var(--primary-soft);padding:18px;border-radius:12px"><div style="color:var(--muted);font-size:12px">Active Chats</div><div style="font-size:28px;font-weight:700;color:var(--primary)"><%= activeChats %></div></div>
+<div style="background:var(--primary-soft);padding:18px;border-radius:12px"><div style="color:var(--muted);font-size:12px">Total Messages</div><div style="font-size:28px;font-weight:700;color:var(--primary)"><%= totalMsgs %></div></div>
+</div>
+<a href="/ckmr/users" class="list-row"><span class="ico">👥</span><div class="lr-title">Users</div></a>
+<a href="/ckmr/channels" class="list-row"><span class="ico">📢</span><div class="lr-title">Channels</div></a>
+<a href="/ckmr/broadcast" class="list-row"><span class="ico">📣</span><div class="lr-title">Broadcast message</div></a>
+<a href="/ckmr/verify" class="list-row"><span class="ico">✓</span><div class="lr-title">Blue tick / Verify</div></a>
+<a href="/ckmr/requests" class="list-row"><span class="ico">📨</span><div class="lr-title">Verification requests</div></a>
+<a href="/ckmr/support" class="list-row"><span class="ico">🎫</span><div class="lr-title">Support tickets</div></a>
+<a href="/ckmr/reports" class="list-row"><span class="ico">⚠</span><div class="lr-title">Reports</div></a>
+<a href="/ckmr/ads" class="list-row"><span class="ico">📰</span><div class="lr-title">Ads</div></a>
+<a href="/ckmr/payments" class="list-row"><span class="ico">💳</span><div class="lr-title">Payment methods</div></a>
+<a href="/ckmr/settings" class="list-row"><span class="ico">⚙</span><div class="lr-title">App settings</div></a>
+<a href="/ckmr/account" class="list-row"><span class="ico">🔒</span><div class="lr-title">Admin account</div></a>
+</div></body></html>

@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app"><div class="center-screen">
+<div class="logo">CK</div><h2>Admin Login</h2>
+<% if (err) { %><div style="color:#dc2626;margin:10px"><%= err %></div><% } %>
+<form method="post" action="/ckmr/login" style="width:100%;max-width:340px">
+<input class="input" name="id" placeholder="Username or email" required style="margin-bottom:10px">
+<input class="input" type="password" name="password" placeholder="Password" required style="margin-bottom:14px">
+<button class="btn">Login</button></form></div></div></body></html>
