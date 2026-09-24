@@ -1,0 +1,59 @@
+<%- include('partials/head', { title: 'Channel info', me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/channel/<%= id %>" class="icon-btn back-btn">←</a><h1 style="font-size:18px">Channel info</h1></div>
+
+<% if (alreadyReported) { %>
+  <div style="background:#dc2626;color:#fff;padding:10px 14px;text-align:center;font-size:13px">⚠ You reported this channel</div>
+<% } %>
+
+<div class="profile-header">
+  <div class="avatar"><% if (c.avatar) { %><img src="<%= e(c.avatar) %>"><% } else { %>📢<% } %></div>
+  <h2><%= e(c.name) %><% if (c.blue_tick) { %><%- blueTickHtml() %><% } %></h2>
+  <div style="color:var(--muted)"><%= followers %> followers</div>
+  <div style="color:var(--muted);font-size:12px;margin-top:4px">Owner: <%= e(ownerInfo.name || ('@'+ownerInfo.username)) %></div>
+  <% if (c.description) { %><p style="margin-top:10px"><%= e(c.description) %></p><% } %>
+</div>
+
+<% if (isOwner) { %>
+<form method="post" enctype="multipart/form-data" style="padding:14px;border-top:1px solid var(--border)">
+  <input type="hidden" name="action" value="edit">
+  <div style="font-weight:600;margin-bottom:8px">Edit channel</div>
+  <label class="field-label">Name</label>
+  <input class="input" name="name" value="<%= e(c.name) %>" style="margin-bottom:8px">
+  <label class="field-label">Description</label>
+  <textarea class="input" name="description" rows="3" style="margin-bottom:8px"><%= e(c.description) %></textarea>
+  <label class="input" style="display:block;text-align:center;cursor:pointer;margin-bottom:10px">📷 Change channel photo<input type="file" name="avatar" hidden></label>
+  <button class="btn">Save changes</button>
+</form>
+
+<div style="padding:14px;border-top:1px solid var(--border)">
+  <div style="font-weight:600;margin-bottom:8px">Invite link</div>
+  <% if (inviteUrl) { %>
+    <input class="input" value="<%= e(inviteUrl) %>" readonly onclick="this.select();document.execCommand('copy');" style="margin-bottom:8px">
+    <div style="color:var(--muted);font-size:12px">Tap to copy. Share this link – anyone who opens it will follow this channel.</div>
+  <% } else { %>
+    <div style="color:var(--muted);font-size:13px;margin-bottom:8px">No invite link yet.</div>
+  <% } %>
+  <form method="post" style="margin-top:8px"><input type="hidden" name="action" value="gen_invite"><button class="btn btn-outline"><%= inviteUrl?'Regenerate link':'Generate invite link' %></button></form>
+</div>
+
+<form method="post" style="padding:14px;border-top:1px solid var(--border)" onsubmit="return confirm('Transfer ownership? You will lose control of this channel.')">
+  <input type="hidden" name="action" value="transfer">
+  <div style="font-weight:600;margin-bottom:8px">Transfer ownership</div>
+  <input class="input" name="new_owner" placeholder="new owner username" required style="margin-bottom:8px">
+  <button class="btn" style="background:#dc2626">Transfer</button>
+</form>
+<% } else { %>
+<form method="post" style="padding:14px;border-top:1px solid var(--border)">
+  <input type="hidden" name="action" value="unfollow">
+  <button class="btn btn-outline">Unfollow</button>
+</form>
+<% } %>
+
+<form method="post" style="padding:14px;border-top:1px solid var(--border)">
+  <input type="hidden" name="action" value="report">
+  <div style="font-weight:600;margin-bottom:8px;color:#dc2626">Report channel</div>
+  <textarea name="reason" class="input" placeholder="Reason..." rows="3" required style="margin-bottom:8px"></textarea>
+  <button class="btn" style="background:#dc2626">Submit report</button>
+</form>
+</div></body></html>

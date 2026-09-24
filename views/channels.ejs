@@ -1,0 +1,50 @@
+<%- include('partials/head', { title: 'Channels', me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><h1>Channels</h1><div class="icons"><a href="/channel/new" class="icon-btn">＋</a></div></div>
+<form class="search" method="get"><span>🔍</span><input name="q" value="<%= e(q) %>" placeholder="Search channels"></form>
+<% function chAvatar(c){ return c.avatar ? '<div class="avatar"><img src="'+e(c.avatar)+'"></div>' : '<div class="avatar">📢</div>'; } %>
+<% function chPreview(c){
+  const t = String(c.last_msg||'').trim();
+  if (t !== '') return e(t.slice(0,50));
+  if (c.last_att) return '📎 Attachment';
+  return formatCount(c.fcount) + ' followers';
+} %>
+<% if (q !== '') { %>
+  <div style="padding:10px 14px;font-weight:700">Results</div>
+  <% if (!results.length) { %><div class="empty">No channel found for "<%= e(q) %>"</div><% } %>
+  <% results.forEach(function(c){ %>
+    <a href="/channel/<%= c.id %>" class="chat-item" style="text-decoration:none;color:inherit">
+      <%- chAvatar(c) %>
+      <div class="chat-meta"><div class="chat-name"><%= e(c.name) %><% if (c.blue_tick) { %><%- blueTickHtml() %><% } %></div><div class="chat-preview"><%= formatCount(c.fcount) %> followers</div></div>
+    </a>
+  <% }); %>
+<% } else { %>
+  <div style="padding:10px 14px;font-weight:700">My channels</div>
+  <% if (!mine.length) { %><div class="empty" style="padding:14px;text-align:left;color:var(--muted);font-size:13px">You haven't joined any channels yet.</div><% } %>
+  <% mine.forEach(function(c){ %>
+    <a href="/channel/<%= c.id %>" class="chat-item" style="text-decoration:none;color:inherit">
+      <%- chAvatar(c) %>
+      <div class="chat-meta">
+        <div class="chat-name"><%= e(c.name) %><% if (c.blue_tick) { %><%- blueTickHtml() %><% } %></div>
+        <div class="chat-preview"><%- chPreview(c) %></div>
+      </div>
+      <div class="chat-side">
+        <%= c.last_t ? timeAmPm(c.last_t) : '' %>
+        <% if (c.unread && c.unread>0) { %><div class="badge badge-green"><%= c.unread %></div><% } %>
+      </div>
+    </a>
+  <% }); %>
+  <div style="padding:10px 14px;font-weight:700">Discover</div>
+  <% discover.forEach(function(c){ %>
+    <a href="/channel/<%= c.id %>" class="chat-item" style="text-decoration:none;color:inherit">
+      <%- chAvatar(c) %>
+      <div class="chat-meta"><div class="chat-name"><%= e(c.name) %><% if (c.blue_tick) { %><%- blueTickHtml() %><% } %></div><div class="chat-preview"><%= formatCount(c.fcount) %> followers</div></div>
+    </a>
+  <% }); %>
+  <% if (!showAll && totalDiscover>4) { %>
+    <div style="padding:12px 14px;text-align:center"><a href="/channels?all=1" class="btn" style="display:inline-block;width:auto;padding:8px 18px;text-decoration:none">See more</a></div>
+    <div style="padding:0 14px 10px;text-align:center;color:var(--muted);font-size:12px">Use the search bar above to find any channel</div>
+  <% } %>
+<% } %>
+<%- include('partials/nav', { tab: 'channels' }) %>
+</div></body></html>

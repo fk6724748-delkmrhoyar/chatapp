@@ -1,0 +1,21 @@
+<%- include('partials/head', { title: title, me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/settings" class="icon-btn">←</a><h1 style="font-size:18px">Verification request</h1></div>
+<% if (query.ok !== undefined) { %><div style="padding:14px;background:#dcfce7;margin:14px;border-radius:8px">Request submitted. Admin will review.</div><% } %>
+<div style="padding:20px;background:var(--primary-soft);margin:14px;border-radius:10px;font-size:13px">
+<strong>Payment methods:</strong><br>
+Price: <%= e(setting('verify_price','500 PKR')) %><br>
+EasyPaisa: <%= e(setting('easypaisa')) %><br>
+JazzCash: <%= e(setting('jazzcash')) %><br>
+Binance: <%= e(setting('binance')) %><br>
+Send payment, then submit form with TRX ID & screenshot.
+</div>
+<form method="post" enctype="multipart/form-data" style="padding:20px">
+<select class="input" name="target_type" style="margin-bottom:10px"><option value="user">User blue tick</option><option value="channel">Channel blue tick</option></select>
+<input class="input" name="target_name" placeholder="Username or Channel name" required style="margin-bottom:10px">
+<input class="input" name="email" placeholder="Email" required value="<%= e(me.email) %>" style="margin-bottom:10px">
+<select class="input" name="method" style="margin-bottom:10px"><option>EasyPaisa</option><option>JazzCash</option><option>Binance</option></select>
+<input class="input" name="trx_id" placeholder="TRX ID" required style="margin-bottom:10px">
+<label class="input" style="display:block;cursor:pointer">Upload screenshot<input type="file" name="screenshot" hidden required></label>
+<button class="btn" style="margin-top:14px">Apply</button>
+</form></div></body></html>

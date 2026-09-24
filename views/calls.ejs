@@ -1,0 +1,21 @@
+<%- include('partials/head', { title: 'Calls', extraHead: `<style>.call-ic{width:22px;height:22px;fill:currentColor;vertical-align:middle}</style>` }) %>
+<div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><h1>Calls</h1></div>
+<div style="padding:10px 14px;font-weight:700">Recent</div>
+<% if (!calls.length) { %><div class="empty">No calls yet.</div><% } %>
+<% calls.forEach(function(c){
+  var init=(c.name||c.email||'?').charAt(0).toUpperCase();
+  var out = c.caller_id === me.id;
+%>
+<a class="chat-item" href="/chat/<%= out ? c.callee_id : c.caller_id %>" style="text-decoration:none;color:inherit"><div class="avatar"><% if (c.avatar) { %><img src="<%= e(c.avatar) %>"><% } else { %><%= init %><% } %></div>
+<div class="chat-meta"><div class="chat-name"><%= e(c.name) %></div><div class="chat-preview"><%= out ? '↗' : '↙' %> <%- c.status==='missed' ? '<span class="danger">missed</span>' : c.status %> · <%= (function(){var d=toDate(c.created_at); var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return d? months[d.getMonth()]+' '+d.getDate()+', '+timeAmPm(c.created_at) : ''; })() %></div></div>
+<div class="chat-side" style="color:<%= c.type==='video' ? '#0891b2' : '#16a34a' %>">
+<% if (c.type==='video') { %>
+<svg class="call-ic" viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/></svg>
+<% } else { %>
+<svg class="call-ic" viewBox="0 0 24 24"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.5 11.5 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.5 11.5 0 0 0 .57 3.6 1 1 0 0 1-.25 1z"/></svg>
+<% } %>
+</div></a>
+<% }); %>
+<%- include('partials/nav', { tab: 'calls' }) %>
+</div></body></html>

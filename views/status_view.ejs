@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head>
+<body style="background:#000">
+<div class="app" style="background:#000;color:#fff;min-height:100vh;position:relative">
+
+<div class="status-progress"><div class="bar active" id="pbar"><i style="animation-duration:<%= isVideo ? '60000ms' : durationMs + 'ms' %>"></i></div></div>
+
+<div class="topbar" style="background:transparent;border:0;padding-top:24px">
+  <a href="/status" class="icon-btn" style="color:#fff">←</a>
+  <div style="display:flex;gap:10px;align-items:center">
+    <div class="avatar" style="width:38px;height:38px;font-size:14px">
+      <% if (p.avatar) { %><img src="<%= e(p.avatar) %>"><% } else { %><%= (p.name||p.email||'?').charAt(0).toUpperCase() %><% } %>
+    </div>
+    <div>
+      <div style="font-weight:600;color:#fff"><%= e(displayName(p)) %></div>
+      <div style="font-size:11px;opacity:.7"><%= timeAmPm(p.created_at) %></div>
+    </div>
+  </div>
+</div>
+
+<div style="padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;min-height:70vh">
+<% if (isVideo) { %>
+  <video id="vid" src="<%= e(p.video) %>" autoplay playsinline controls style="max-width:100%;max-height:75vh;border-radius:12px"></video>
+<% } else if (p.image) { %>
+  <img src="<%= e(p.image) %>" style="max-width:100%;max-height:75vh;border-radius:12px">
+<% } %>
+</div>
+<% if (p.body) { %><p style="margin:0 20px 30px;font-size:18px;text-align:center"><%- e(p.body).replace(/\n/g,'<br>') %></p><% } %>
+
+</div>
+<script>
+(function(){
+  var done = function(){ window.location.href = '/status'; };
+  var v = document.getElementById('vid');
+  if (v) { v.addEventListener('ended', done); }
+  else { setTimeout(done, <%- JSON.stringify(durationMs) %>); }
+})();
+</script>
+</body></html>

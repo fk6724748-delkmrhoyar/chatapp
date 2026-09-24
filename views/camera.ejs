@@ -1,0 +1,7 @@
+<%- include('partials/head', { title: title }) %><div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><h1 style="font-size:18px">Camera</h1></div>
+<form method="post" enctype="multipart/form-data" style="padding:20px">
+<label class="input" style="display:block;text-align:center;cursor:pointer;margin-bottom:12px;padding:30px">📷 Open camera / choose photo or video<input type="file" name="image" accept="image/*,video/*" capture="environment" hidden required></label>
+<input class="input" name="body" placeholder="Add caption" style="margin-bottom:12px">
+<button class="btn">Post to status</button>
+</form></div></body></html>

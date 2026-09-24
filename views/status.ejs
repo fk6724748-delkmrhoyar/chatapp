@@ -1,0 +1,58 @@
+<%- include('partials/head', { title: 'Updates' }) %>
+<div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><h1>Updates</h1></div>
+<div style="padding:10px 14px;font-weight:700;font-size:16px">Status</div>
+
+<% if (myLatest) { %>
+  <a class="chat-item" href="/status/<%= myLatest.id %>?mine=1" style="text-decoration:none;color:inherit">
+    <div class="avatar" style="outline:2px solid var(--primary);outline-offset:2px;position:relative">
+      <% if (me.avatar) { %><img src="<%= e(me.avatar) %>"><% } else { %><%= (me.email||'?').charAt(0).toUpperCase() %><% } %>
+    </div>
+    <div class="chat-meta">
+      <div class="chat-name">My status</div>
+      <div class="chat-preview"><%= timeAmPm(myLatest.created_at) %> &middot; Tap to view</div>
+    </div>
+    <form method="post" action="/status" enctype="multipart/form-data" style="margin:0">
+      <label style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:18px">+
+        <input type="file" name="image" accept="image/*,video/*" hidden onchange="this.form.submit()">
+      </label>
+    </form>
+  </a>
+<% } else { %>
+  <form method="post" action="/status" enctype="multipart/form-data" class="chat-item" style="cursor:pointer">
+    <label style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer">
+      <div class="avatar" style="position:relative">
+        <% if (me.avatar) { %><img src="<%= e(me.avatar) %>"><% } else { %><%= (me.email||'?').charAt(0).toUpperCase() %><% } %>
+        <span style="position:absolute;bottom:-2px;right:-2px;background:var(--primary);color:#fff;width:18px;height:18px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #fff">+</span>
+      </div>
+      <div class="chat-meta"><div class="chat-name">My status</div><div class="chat-preview">Tap to add status update</div></div>
+      <input type="file" name="image" accept="image/*,video/*" hidden onchange="this.form.submit()">
+    </label>
+  </form>
+<% } %>
+
+<% ads.forEach(function(a){
+  var thumb = a.image || '';
+  var hasVid = !!a.video;
+%>
+<a class="chat-item" href="/ad/<%= a.id %>" style="text-decoration:none;color:inherit">
+  <div class="avatar" style="outline:2px solid var(--primary);outline-offset:2px;position:relative">
+    <% if (thumb) { %><img src="<%= e(thumb) %>">
+    <% } else if (hasVid) { %>▶
+    <% } else { %>📣<% } %>
+  </div>
+  <div class="chat-meta">
+    <div class="chat-name">Sponsored<%= a.title ? ' · ' + e(a.title) : '' %></div>
+    <div class="chat-preview"><%= e(a.caption) %></div>
+  </div>
+</a>
+<% }); %>
+<% if (others.length) { %><div style="padding:10px 14px;color:var(--muted);font-size:12px">Recent updates</div><% } %>
+<% others.forEach(function(o){ var init=(o.name||o.email||'?').charAt(0).toUpperCase(); %>
+<a class="chat-item" href="/status/<%= o.id %>" style="text-decoration:none;color:inherit">
+  <div class="avatar" style="outline:2px solid var(--primary);outline-offset:2px"><% if (o.avatar) { %><img src="<%= e(o.avatar) %>"><% } else { %><%= init %><% } %></div>
+  <div class="chat-meta"><div class="chat-name"><%= e(o.name || o.email) %></div><div class="chat-preview"><%= timeAmPm(o.created_at) %></div></div>
+</a>
+<% }); %>
+<%- include('partials/nav', { tab: 'status' }) %>
+</div></body></html>

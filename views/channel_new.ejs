@@ -1,0 +1,10 @@
+<%- include('partials/head', { title: 'New channel', me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/channels" class="icon-btn">←</a><h1 style="font-size:18px">New channel</h1></div>
+<form method="post" enctype="multipart/form-data" style="padding:20px">
+<% if (err) { %><div class="alert danger-bg"><%= e(err) %></div><% } %>
+<label class="input" style="display:block;cursor:pointer;text-align:center;margin-bottom:14px">📷 Upload photo<input type="file" name="avatar" accept="image/*" hidden></label>
+<input class="input" name="name" placeholder="Channel username (no spaces)" required pattern="[a-zA-Z0-9_\.]{3,}" title="Letters, numbers, _ or . only — no spaces" value="<%= e(name) %>" style="margin-bottom:14px">
+<textarea class="input" name="description" placeholder="Description" rows="4" style="margin-bottom:14px"><%= e(description) %></textarea>
+<button class="btn">Create channel</button>
+</form></div></body></html>

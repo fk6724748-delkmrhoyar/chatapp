@@ -1,0 +1,9 @@
+<%- include('partials/head', { title: title }) %><div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><form method="get" style="flex:1"><input class="input" name="q" placeholder="Search users" value="<%= e(q) %>" autofocus></form></div>
+<% users.forEach(function(u){ var init = (u.name || u.email || '?').charAt(0).toUpperCase(); %>
+<a href="/chat/<%= u.id %>" class="chat-item" style="text-decoration:none;color:inherit">
+<div class="avatar"><% if (u.avatar) { %><img src="<%= e(u.avatar) %>"><% } else { %><%= init %><% } %></div>
+<div class="chat-meta"><div class="chat-name"><%= e(displayName(u)) %><% if (u.blue_tick) { %><%- blueTickHtml() %><% } %></div><div class="chat-preview">@<%= e(u.username || ('user' + u.id)) %> · <%= e(u.email) %></div></div>
+</a>
+<% }); %>
+</div></body></html>

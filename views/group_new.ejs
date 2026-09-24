@@ -1,0 +1,9 @@
+<%- include('partials/head', { title: 'New group', me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><h1 style="font-size:18px">New group</h1></div>
+<form method="post" enctype="multipart/form-data" style="padding:20px">
+<label class="input" style="cursor:pointer;display:block;text-align:center;margin-bottom:14px">📷 Group photo<input type="file" name="avatar" hidden></label>
+<input class="input" name="name" placeholder="Group name" required style="margin-bottom:10px">
+<textarea class="input" name="description" placeholder="Description" rows="3"></textarea>
+<button class="btn" style="margin-top:14px">Create group</button>
+</form></div></body></html>

@@ -1,0 +1,58 @@
+<%
+const extraHead = `<style>
+.compose{align-items:flex-end}
+.compose textarea{flex:1;border:1px solid var(--border);border-radius:20px;padding:10px 14px;outline:0;font-size:16px;font-family:inherit;line-height:1.35;resize:none;max-height:140px;overflow-y:auto;background:var(--surface,#fff);color:inherit;box-sizing:border-box}
+.compose .icon-btn,.compose .send{align-self:flex-end}
+</style>`;
+%>
+<%- include('partials/head', { title: c.name, me: me, extraHead }) %>
+<div class="app chat-shell">
+<div class="topbar">
+  <a href="/channels" class="icon-btn back-btn">←</a>
+  <a href="/channel/<%= id %>/profile" style="display:flex;align-items:center;gap:10px;flex:1;text-decoration:none;color:inherit">
+    <div class="avatar" style="width:38px;height:38px"><% if (c.avatar) { %><img src="<%= e(c.avatar) %>"><% } else { %>📢<% } %></div>
+    <div><div style="font-weight:600"><%= e(c.name) %><% if (c.blue_tick) { %><%- blueTickHtml() %><% } %></div><div style="font-size:11px;color:var(--muted)"><%= formatCount(followers) %> followers</div></div>
+  </a>
+  <a href="/channel/<%= id %>/profile" class="icon-btn">⋮</a>
+</div>
+<% if (!isFollow) { %>
+  <form method="post" class="channel-follow" style="padding:14px"><button name="follow" value="1" class="btn">Follow</button></form>
+<% } %>
+<div class="chat-bg" id="bg">
+<% msgs.forEach(function(m){ %>
+  <div class="msg in" style="max-width:90%;align-self:center">
+    <% if (m.attachment) { %><a href="<%= e(m.attachment) %>" download><img src="<%= e(m.attachment) %>" style="max-width:100%;border-radius:8px"></a><% } %>
+    <%- nl2brLinkify(m.body) %>
+    <span class="time"><%= dayLabel(m.created_at).split(',')[0] %>, <%= timeAmPm(m.created_at) %></span>
+  </div>
+<% }); %>
+</div>
+<% if (c.owner_id == me.id) { %>
+<div id="chAttPreview" style="display:none;padding:6px 10px;background:var(--panel,#f1f5f9);border-top:1px solid #e2e8f0"><div style="display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:4px 8px"><img id="chAttThumb" src="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;display:none"><span id="chAttName" style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button type="button" id="chAttClear" style="background:none;border:none;font-size:16px;cursor:pointer;color:#dc2626">×</button></div></div>
+<form class="compose" method="post" enctype="multipart/form-data" id="chForm">
+  <label class="icon-btn">📎<input type="file" id="chAtt" name="attachment" hidden></label>
+  <textarea name="body" id="chBody" placeholder="Post to channel" rows="1"></textarea>
+  <button class="send" type="submit">➤</button>
+</form>
+<script>
+(function(){
+  var inp=document.getElementById('chAtt'); if(!inp) return;
+  var pv=document.getElementById('chAttPreview'),th=document.getElementById('chAttThumb'),nm=document.getElementById('chAttName'),cl=document.getElementById('chAttClear');
+  inp.addEventListener('change',function(){
+    var f=inp.files&&inp.files[0]; if(!f){ pv.style.display='none'; return; }
+    nm.textContent=f.name; pv.style.display='block';
+    if(f.type.indexOf('image/')===0){ th.src=URL.createObjectURL(f); th.style.display='inline-block'; } else { th.style.display='none'; }
+  });
+  cl.addEventListener('click',function(){ inp.value=''; pv.style.display='none'; th.src=''; });
+})();
+(function(){
+  var t=document.getElementById('chBody'),f=document.getElementById('chForm'); if(!t) return;
+  function grow(){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,140)+'px'; }
+  t.addEventListener('input',grow);
+  t.addEventListener('keydown',function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); if(t.value.trim().length>0 || (document.getElementById('chAtt').files||[])[0]) f.submit(); } });
+  grow();
+})();
+</script>
+<% } %>
+<script>const bg=document.getElementById('bg');if(bg)bg.scrollTop=bg.scrollHeight;</script>
+</div><script src="/assets/emoji.js?v=5"></script></body></html>

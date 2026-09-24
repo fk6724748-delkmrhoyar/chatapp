@@ -1,0 +1,76 @@
+<%
+const extraHead = `<style>
+html,body{height:100%;overflow:hidden}
+.app{max-width:480px;margin:0 auto;background:var(--bg);position:relative;height:100vh;height:100dvh;display:flex;flex-direction:column;padding-bottom:0 !important;overflow:hidden}
+.app > .topbar{position:relative;top:auto;flex:0 0 auto}
+.app > .chat-bg{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:14px}
+.app > .compose,.app > form.compose{position:relative;left:auto;right:auto;bottom:auto;max-width:none;margin:0;flex:0 0 auto;width:100%;padding:8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));box-sizing:border-box}
+.app > .compose > *{flex-shrink:0}
+.app > .compose{align-items:flex-end}
+.app > .compose input[type=text],.app > .compose textarea{flex:1 1 auto;min-width:0;font-size:16px}
+.app > .compose textarea{border:1px solid var(--border);border-radius:20px;padding:10px 14px;outline:0;font-family:inherit;line-height:1.35;resize:none;max-height:140px;overflow-y:auto;background:var(--surface,#fff);color:inherit;box-sizing:border-box}
+.app > .compose .icon-btn,.app > .compose .send{align-self:flex-end}
+.app > .compose .send{flex:0 0 42px}
+</style>`;
+%>
+<%- include('partials/head', { title: g.name, me: me, extraHead }) %>
+<div class="app chat-shell">
+<div class="topbar">
+  <a href="/chats" class="icon-btn back-btn">←</a>
+  <a href="/group/<%= gid %>/profile" style="display:flex;align-items:center;gap:10px;flex:1;text-decoration:none;color:inherit">
+    <div class="avatar" style="width:38px;height:38px"><% if (g.avatar) { %><img src="<%= e(g.avatar) %>"><% } else { %>👥<% } %></div>
+    <div><div style="font-weight:600"><%= e(g.name) %></div><div style="font-size:11px;color:var(--muted)"><%= memberCount %> members</div></div>
+  </a>
+  <a href="/group/<%= gid %>/profile" class="icon-btn">⋮</a>
+</div>
+<div class="chat-bg" id="bg" <% if (me.wallpaper) { %>style="background-image:linear-gradient(rgba(245,248,255,.72),rgba(245,248,255,.72)),url('<%= e(me.wallpaper) %>');background-size:cover;background-position:center"<% } %>>
+<% msgs.forEach(function(m){ const out = m.sender_id == me.id; %>
+  <div class="msg <%= out?'out':'in' %>">
+    <% if (!out) { %><div style="font-size:11px;color:var(--primary);font-weight:700;margin-bottom:2px"><%= e(displayName(m)) %></div><% } %>
+    <% if (m.attachment) {
+      const gext = String(m.attachment).split('.').pop().toLowerCase();
+      if (['mp4','mov','webm','m4v','3gp'].includes(gext)) { %>
+      <video controls src="<%= e(m.attachment) %>" style="max-width:100%;border-radius:8px;margin-bottom:6px"></video>
+    <% } else if (['mp3','m4a','wav','ogg','oga','aac'].includes(gext)) { %>
+      <audio controls src="<%= e(m.attachment) %>" style="max-width:220px;height:36px;margin-bottom:6px"></audio>
+    <% } else if (['jpg','jpeg','png','gif','webp','bmp'].includes(gext)) { %>
+      <a href="<%= e(m.attachment) %>" download><img src="<%= e(m.attachment) %>" style="max-width:100%;border-radius:8px;margin-bottom:6px"></a>
+    <% } else { %>
+      <a href="<%= e(m.attachment) %>" download class="link">📎 Attachment</a>
+    <% } } %>
+    <%- nl2brLinkify(m.body) %>
+    <span class="time"><%= timeAmPm(m.created_at) %></span>
+  </div>
+<% }); %>
+</div>
+<% if (!g.only_admin_msg || g.is_admin) { %>
+  <div id="attPreview" style="display:none;padding:6px 10px;background:var(--panel,#f1f5f9);border-top:1px solid #e2e8f0"><div style="display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:4px 8px"><img id="attThumb" src="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;display:none"><span id="attName" style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button type="button" id="attClear" style="background:none;border:none;font-size:16px;cursor:pointer;color:#dc2626">×</button></div></div>
+  <form class="compose" method="post" enctype="multipart/form-data" id="gcForm">
+    <label class="icon-btn">📎<input type="file" id="gcAtt" name="attachment" accept="*/*" hidden></label>
+    <textarea name="body" id="gcBody" placeholder="Message" autocomplete="off" rows="1"></textarea>
+    <button class="send" type="submit">➤</button>
+  </form>
+<% } else { %>
+  <div class="compose" style="justify-content:center;color:var(--muted);font-size:13px">Only admins can send messages.</div>
+<% } %>
+<script>
+(function(){
+  var inp=document.getElementById('gcAtt'); if(!inp) return;
+  var pv=document.getElementById('attPreview'),th=document.getElementById('attThumb'),nm=document.getElementById('attName'),cl=document.getElementById('attClear');
+  inp.addEventListener('change',function(){
+    var f=inp.files&&inp.files[0]; if(!f){ pv.style.display='none'; return; }
+    nm.textContent=f.name; pv.style.display='block';
+    if(f.type.indexOf('image/')===0){ th.src=URL.createObjectURL(f); th.style.display='inline-block'; } else { th.style.display='none'; }
+  });
+  cl.addEventListener('click',function(){ inp.value=''; pv.style.display='none'; th.src=''; });
+})();
+(function(){
+  var t=document.getElementById('gcBody'),f=document.getElementById('gcForm'); if(!t) return;
+  function grow(){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,140)+'px'; }
+  t.addEventListener('input',grow);
+  t.addEventListener('keydown',function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); if(t.value.trim().length>0 || (document.getElementById('gcAtt').files||[])[0]) f.submit(); } });
+  grow();
+})();
+</script>
+<script>const bg=document.getElementById('bg');bg.scrollTop=bg.scrollHeight;</script>
+</div><script src="/assets/emoji.js?v=5"></script></body></html>

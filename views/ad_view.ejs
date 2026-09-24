@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title><%= e(title) %></title>
+<link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head>
+<body style="background:#000">
+<div class="app" style="background:#000;color:#fff;min-height:100vh;position:relative">
+
+<div class="status-progress"><div class="bar active" id="pbar"><i style="animation-duration:<%= isVideo ? '60000ms' : durationMs + 'ms' %>"></i></div></div>
+
+<div class="topbar" style="background:transparent;border:0;padding-top:24px">
+  <a href="/status" class="icon-btn" style="color:#fff">←</a>
+  <div style="flex:1">
+    <div style="font-weight:700;color:#fff">Sponsored</div>
+    <div style="font-size:11px;opacity:.7">Ad · Expires <%= (function(){var d=toDate(ad.expires_at); if(!d) return ''; var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return months[d.getMonth()]+' '+d.getDate()+' '+timeAmPm(ad.expires_at);})() %></div>
+  </div>
+</div>
+
+<div style="padding:10px;text-align:center;display:flex;align-items:center;justify-content:center;min-height:65vh">
+<% if (isVideo) { %>
+  <video id="vid" src="<%= e(ad.video) %>" autoplay playsinline controls style="max-width:100%;max-height:70vh;border-radius:12px"></video>
+<% } else if (ad.image) { %>
+  <img src="<%= e(ad.image) %>" style="max-width:100%;max-height:70vh;border-radius:12px">
+<% } %>
+</div>
+
+<div style="padding:14px 20px;text-align:center">
+  <% if (ad.title) { %><div style="font-size:18px;font-weight:700;margin-bottom:6px"><%= e(ad.title) %></div><% } %>
+  <% if (ad.caption) { %><p style="margin:0;font-size:14px;opacity:.9"><%- nl2brLinkify(ad.caption) %></p><% } %>
+</div>
+
+</div>
+<script>
+(function(){
+  var done = function(){ window.location.href = '/status'; };
+  var v = document.getElementById('vid');
+  if (v) { v.addEventListener('ended', done); }
+  else { setTimeout(done, <%= durationMs %>); }
+})();
+</script>
+</body></html>

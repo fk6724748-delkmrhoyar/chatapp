@@ -1,0 +1,109 @@
+<%- include('partials/head', { title: app_name, me: null }) %>
+<div class="app">
+<% function logo(size){ return app_logo ? '<img src="'+e(app_logo)+'">' : 'CK'; } %>
+<% if (step === 'welcome') { %>
+  <div class="center-screen">
+    <div class="logo"><%- app_logo ? '<img src="'+e(app_logo)+'">' : 'CK' %></div>
+    <div class="app-title"><%= app_name %></div>
+    <p style="color:var(--muted);margin-bottom:30px">Chat with friends, free and secure.</p>
+    <a href="/?step=email" class="btn" style="text-align:center;display:block;text-decoration:none;color:#fff">Agree &amp; Continue</a>
+  </div>
+
+<% } else if (step === 'email') { %>
+  <div class="center-screen">
+    <div class="logo"><%- app_logo ? '<img src="'+e(app_logo)+'">' : 'CK' %></div>
+    <h2 style="margin-bottom:20px">Enter your email</h2>
+    <% if (error) { %><div class="alert danger-bg"><%= error %></div><% } %>
+    <form method="post" action="/auth" style="width:100%;max-width:340px">
+      <input type="hidden" name="mode" value="email">
+      <input class="input" type="email" name="email" value="<%= signupEmail %>" placeholder="you@example.com" required style="margin-bottom:14px">
+      <button class="btn">Continue</button>
+    </form>
+  </div>
+
+<% } else if (step === 'otp') { %>
+  <div class="center-screen">
+    <div class="logo"><%- app_logo ? '<img src="'+e(app_logo)+'">' : 'CK' %></div>
+    <h2 style="margin-bottom:6px">Verify your email</h2>
+    <div style="color:var(--muted);margin-bottom:20px;text-align:center">We sent a 6-digit code to<br><b style="color:var(--text)"><%= signupEmail %></b></div>
+    <% if (error) { %><div class="alert danger-bg"><%= error %></div><% } %>
+    <form method="post" action="/auth" style="width:100%;max-width:340px">
+      <input type="hidden" name="mode" value="otp">
+      <input class="input" name="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="------" required autofocus
+        style="margin-bottom:14px;text-align:center;font-size:22px;letter-spacing:10px;font-weight:700">
+      <button class="btn">Verify &amp; Continue</button>
+    </form>
+    <form method="post" action="/auth" style="margin-top:10px">
+      <input type="hidden" name="mode" value="resend">
+      <button class="btn btn-outline" style="background:transparent" data-resend-button data-seconds-left="<%= resendWait %>" <%= resendWait>0?'disabled':'' %>><%= resendWait>0 ? ('Resend in '+resendWait+'s') : 'Resend code' %></button>
+    </form>
+    <a href="/?step=email" style="margin-top:12px;color:var(--muted);font-size:13px">Use another email</a>
+  </div>
+
+<% } else if (step === 'password') { %>
+  <div class="center-screen">
+    <div class="logo"><%- app_logo ? '<img src="'+e(app_logo)+'">' : 'CK' %></div>
+    <h2 style="margin-bottom:6px">Welcome back</h2>
+    <div style="color:var(--muted);margin-bottom:20px"><%= signupEmail %></div>
+    <% if (error) { %><div class="alert danger-bg"><%= error %></div><% } %>
+    <form method="post" action="/auth" style="width:100%;max-width:340px">
+      <input type="hidden" name="mode" value="login">
+      <input class="input" type="password" name="password" placeholder="Password" required style="margin-bottom:14px" autofocus>
+      <button class="btn">Login</button>
+      <a href="/?step=email" class="btn btn-outline" style="margin-top:10px;text-align:center;display:block">Use another email</a>
+    </form>
+  </div>
+
+<% } else if (step === 'signup') { %>
+  <div class="center-screen" style="justify-content:flex-start;padding-top:30px">
+    <div class="logo" style="width:84px;height:84px;font-size:34px"><%- app_logo ? '<img src="'+e(app_logo)+'">' : 'CK' %></div>
+    <h2 style="margin-bottom:8px">Create account</h2>
+    <% if (error) { %><div class="alert danger-bg"><%= error %></div><% } %>
+    <form method="post" action="/auth" enctype="multipart/form-data" style="width:100%;max-width:340px;text-align:left">
+      <input type="hidden" name="mode" value="signup">
+      <input type="hidden" name="email" value="<%= signupEmail %>">
+
+      <div style="text-align:center;margin-bottom:14px">
+        <label style="cursor:pointer;display:inline-block">
+          <div class="avatar" style="width:96px;height:96px;font-size:32px;margin:0 auto">📷</div>
+          <div style="margin-top:6px;color:var(--primary);font-size:13px">Add photo</div>
+          <input type="file" name="avatar" accept="image/*" hidden>
+        </label>
+      </div>
+
+      <label class="field-label">Name</label>
+      <input class="input" name="name" placeholder="Your name" required style="margin-bottom:10px">
+
+      <label class="field-label">Username</label>
+      <input class="input" name="username" placeholder="username" required style="margin-bottom:10px">
+
+      <label class="field-label">Phone number</label>
+      <input class="input" name="phone" placeholder="Phone number" style="margin-bottom:10px">
+
+      <label class="field-label">Password</label>
+      <input class="input" type="password" name="password" placeholder="Password (min 6)" required style="margin-bottom:10px">
+
+      <label class="field-label">Re-enter password</label>
+      <input class="input" type="password" name="repassword" placeholder="Repeat password" required style="margin-bottom:10px">
+
+      <label class="field-label">About</label>
+      <input class="input" name="about" placeholder="Hey there! I'm using CK Chat" style="margin-bottom:18px">
+
+      <button class="btn">Continue</button>
+    </form>
+  </div>
+<% } else if (step === 'setpwd') { %>
+  <div class="center-screen">
+    <div class="logo"><%- app_logo ? '<img src="'+e(app_logo)+'">' : 'CK' %></div>
+    <h2 style="margin-bottom:6px">Set a password</h2>
+    <div style="color:var(--muted);margin-bottom:20px;text-align:center">Your account doesn't have a password yet.<br>Create one to keep logging in.</div>
+    <% if (error) { %><div class="alert danger-bg"><%= error %></div><% } %>
+    <form method="post" action="/auth" style="width:100%;max-width:340px">
+      <input type="hidden" name="mode" value="setpwd">
+      <input class="input" type="password" name="password" placeholder="New password (min 6)" required style="margin-bottom:10px">
+      <input class="input" type="password" name="repassword" placeholder="Repeat password" required style="margin-bottom:14px">
+      <button class="btn">Save &amp; Login</button>
+    </form>
+  </div>
+<% } %>
+</div></body></html>

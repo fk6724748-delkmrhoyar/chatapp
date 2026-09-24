@@ -1,0 +1,19 @@
+<%- include('partials/head', { title: title, me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn back-btn">←</a><h1 style="font-size:18px">Menu</h1></div>
+
+<a href="/group/new" class="list-row"><span class="ico">👥</span><div class="chat-meta"><div class="lr-title">New group</div></div></a>
+<a href="/channel/new" class="list-row"><span class="ico">📢</span><div class="chat-meta"><div class="lr-title">New channel</div></div></a>
+
+<form method="post">
+  <button type="submit" name="toggle_dark" value="1" class="list-row" style="width:100%;border:0;background:none;text-align:left;cursor:pointer">
+    <span class="ico"><%= me.dark_mode ? '☀️' : '🌙' %></span>
+    <div class="chat-meta"><div class="lr-title">Dark mode</div><div class="lr-sub" style="color:var(--muted);font-size:12px"><%= me.dark_mode ? 'On – tap to turn off' : 'Off – tap to turn on' %></div></div>
+  </button>
+</form>
+
+<a href="/settings" class="list-row"><span class="ico">⚙</span><div class="chat-meta"><div class="lr-title">Settings</div></div></a>
+<a href="<%= e(setting('support_link','/support')) %>" class="list-row"><span class="ico">🎫</span><div class="chat-meta"><div class="lr-title">Support Center</div></div></a>
+<a href="/logout" class="list-row" style="color:#dc2626"><span class="ico">⎋</span><div class="chat-meta"><div class="lr-title">Logout</div></div></a>
+
+</div></body></html>

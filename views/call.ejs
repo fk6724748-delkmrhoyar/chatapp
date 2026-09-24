@@ -1,0 +1,451 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Call</title>
+<link rel="stylesheet" href="/assets/style.css">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+html,body{height:100%;margin:0;background:#0b1220;color:#fff;font-family:inherit;overflow:hidden}
+.cwrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:40px 20px calc(30px + env(safe-area-inset-bottom));text-align:center;background:linear-gradient(180deg,#111827,#0b1220)}
+.cwrap .peer-name{font-size:22px;font-weight:700;margin-top:14px}
+.cwrap .peer-sub{font-size:14px;color:#94a3b8;margin-top:4px;min-height:18px}
+.cwrap .dp{width:150px;height:150px;border-radius:50%;background:#334155;display:flex;align-items:center;justify-content:center;font-size:56px;color:#fff;overflow:hidden;margin-top:60px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.cwrap .dp img{width:100%;height:100%;object-fit:cover}
+.two-dp{display:flex;gap:24px;justify-content:center;margin-top:60px}
+.two-dp .dp{width:110px;height:110px;font-size:40px;margin-top:0}
+.cactions{display:flex;justify-content:center;gap:22px;margin-bottom:10px;flex-wrap:wrap}
+.cbtn{width:64px;height:64px;border-radius:50%;border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.35);padding:0}
+.cbtn svg{width:28px;height:28px;fill:#fff}
+.cbtn.accept{background:#16a34a}
+.cbtn.end,.cbtn.reject{background:#dc2626}
+.cbtn.mute,.cbtn.spk,.cbtn.add,.cbtn.vid{background:#334155}
+.cbtn.mute.active,.cbtn.spk.active,.cbtn.vid.active{background:#f59e0b}
+.cbtn-lbl{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:#cbd5e1}
+.addPeople{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.1);border:none;color:#fff;padding:8px 12px;border-radius:20px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.addPeople svg{width:16px;height:16px;fill:#fff}
+.addList{position:absolute;top:60px;right:16px;font-size:12px;color:#cbd5e1;text-align:right}
+.timer{font-size:15px;color:#94a3b8;margin-top:10px;min-height:20px}
+
+/* video call layout */
+.videoLayer{position:fixed;inset:0;background:#000;display:none;z-index:1}
+.videoLayer.on{display:block}
+.videoLayer #remoteVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.videoLayer #localVideo{position:absolute;top:18px;right:14px;width:110px;height:150px;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,.35);background:#111;z-index:3}
+.cwrap.overlay{background:transparent;z-index:2;pointer-events:none}
+.cwrap.overlay .peer-name,.cwrap.overlay .peer-sub,.cwrap.overlay .timer{text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.cwrap.overlay .cactions,.cwrap.overlay .addPeople{pointer-events:auto}
+.cwrap.overlay #topArea .dp,.cwrap.overlay #topArea .two-dp{display:none !important}
+
+/* Add-people custom modal */
+.addModal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:9999}
+.addModal.on{display:flex}
+.addBox{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:18px;width:min(88vw,340px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.addBox h4{margin:0 0 10px;font-size:16px;color:#fff}
+.addBox input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:#fff;font-size:14px;outline:none}
+.addBox input:focus{border-color:#38bdf8}
+.addBox .row{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}
+.addBox button{padding:8px 14px;border-radius:8px;border:none;font-size:13px;cursor:pointer}
+.addBox .cancel{background:#334155;color:#fff}
+.addBox .ok{background:#16a34a;color:#fff}
+</style></head>
+<body>
+
+<!-- Video layer (only for video calls, shown when answered) -->
+<div class="videoLayer" id="videoLayer">
+  <video id="remoteVideo" autoplay playsinline></video>
+  <video id="localVideo" autoplay playsinline muted></video>
+</div>
+
+<div class="cwrap" id="cwrap">
+  <button class="addPeople" id="addPeopleBtn">
+    <svg viewBox="0 0 24 24"><path d="M15 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3 0-9 1.5-9 4.5V21h12v-2.5a3.5 3.5 0 0 0-.1-.9A15 15 0 0 0 15 14zM6 10V7H4v3H1v2h3v3h2v-3h3v-2H6z"/></svg>
+    Add
+  </button>
+  <div class="addList" id="addList"></div>
+
+  <div id="topArea" style="display:flex;flex-direction:column;align-items:center">
+    <div id="singleDp" class="dp"><% if (peer.avatar) { %><img src="<%= e(peer.avatar) %>"><% } else { %><%= init %><% } %></div>
+    <div id="doubleDp" class="two-dp" style="display:none">
+      <div class="dp"><% if (me.avatar) { %><img src="<%= e(me.avatar) %>"><% } else { %><%= myInit %><% } %></div>
+      <div class="dp"><% if (peer.avatar) { %><img src="<%= e(peer.avatar) %>"><% } else { %><%= init %><% } %></div>
+    </div>
+    <div class="peer-name"><%= e(peer.name || peer.email) %></div>
+    <div class="peer-sub" id="statusText"><%= mode === 'incoming' ? ('Incoming ' + call.type + ' call…') : (peerOnline ? 'Ringing…' : 'Calling…') %></div>
+    <div class="timer" id="timer"></div>
+  </div>
+
+  <div class="cactions" id="incomingCtl" style="<%- mode === 'incoming' ? '' : 'display:none' %>">
+    <div class="cbtn-lbl">
+      <button class="cbtn reject" id="btnReject" title="Reject">
+        <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1a1 1 0 0 1-.6.92l-2.4 1a1 1 0 0 1-1.1-.25L.3 11.5a1 1 0 0 1 0-1.4A16.44 16.44 0 0 1 12 5a16.44 16.44 0 0 1 11.7 5.1 1 1 0 0 1 0 1.4l-3 3a1 1 0 0 1-1.1.24l-2.4-1a1 1 0 0 1-.6-.92v-3.1A14.94 14.94 0 0 0 12 9z" transform="rotate(135 12 12)"/></svg>
+      </button>
+      <span>Reject</span>
+    </div>
+    <div class="cbtn-lbl">
+      <button class="cbtn accept" id="btnAccept" title="Accept">
+        <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.5 11.5 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.5 11.5 0 0 0 .57 3.6 1 1 0 0 1-.25 1z"/></svg>
+      </button>
+      <span>Accept</span>
+    </div>
+  </div>
+
+  <div class="cactions" id="ringingCtl" style="<%- mode === 'incoming' ? 'display:none' : '' %>">
+    <div class="cbtn-lbl">
+      <button class="cbtn end" id="btnCancel" title="Cancel">
+        <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1a1 1 0 0 1-.6.92l-2.4 1a1 1 0 0 1-1.1-.25L.3 11.5a1 1 0 0 1 0-1.4A16.44 16.44 0 0 1 12 5a16.44 16.44 0 0 1 11.7 5.1 1 1 0 0 1 0 1.4l-3 3a1 1 0 0 1-1.1.24l-2.4-1a1 1 0 0 1-.6-.92v-3.1A14.94 14.94 0 0 0 12 9z" transform="rotate(135 12 12)"/></svg>
+      </button>
+      <span>Cancel</span>
+    </div>
+  </div>
+
+  <div class="cactions" id="answeredCtl" style="display:none">
+    <div class="cbtn-lbl">
+      <button class="cbtn mute" id="btnMute" title="Mute">
+        <svg id="micIcon" viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+      </button>
+      <span id="muteLbl">Mute</span>
+    </div>
+    <% if (isVideo) { %>
+    <div class="cbtn-lbl">
+      <button class="cbtn vid" id="btnVid" title="Camera">
+        <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/></svg>
+      </button>
+      <span id="vidLbl">Camera</span>
+    </div>
+    <% } %>
+    <div class="cbtn-lbl">
+      <button class="cbtn spk" id="btnSpk" title="Speaker">
+        <svg viewBox="0 0 24 24"><path d="M3 10v4a1 1 0 0 0 1 1h3l4 4a1 1 0 0 0 1.7-.7V5.7A1 1 0 0 0 11 5L7 9H4a1 1 0 0 0-1 1zm13.5 2A4.5 4.5 0 0 0 14 8.03v7.94A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06A6.99 6.99 0 0 1 19 12a6.99 6.99 0 0 1-5 6.71v2.06A9 9 0 0 0 21 12 9 9 0 0 0 14 3.23z"/></svg>
+      </button>
+      <span id="spkLbl">Speaker</span>
+    </div>
+    <div class="cbtn-lbl">
+      <button class="cbtn end" id="btnEnd" title="End">
+        <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1a1 1 0 0 1-.6.92l-2.4 1a1 1 0 0 1-1.1-.25L.3 11.5a1 1 0 0 1 0-1.4A16.44 16.44 0 0 1 12 5a16.44 16.44 0 0 1 11.7 5.1 1 1 0 0 1 0 1.4l-3 3a1 1 0 0 1-1.1.24l-2.4-1a1 1 0 0 1-.6-.92v-3.1A14.94 14.94 0 0 0 12 9z" transform="rotate(135 12 12)"/></svg>
+      </button>
+      <span>End</span>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden audio element for remote peer stream (earpiece path) -->
+<audio id="remoteAudio" autoplay playsinline></audio>
+
+<!-- Add People modal -->
+<div class="addModal" id="addModal">
+  <div class="addBox">
+    <h4>Add person to call</h4>
+    <input id="addInput" type="text" placeholder="Enter username" autocomplete="off">
+    <div class="row">
+      <button class="cancel" id="addCancel">Cancel</button>
+      <button class="ok" id="addOk">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CALL_ID = <%- JSON.stringify(id) %>;
+  var MODE = <%- JSON.stringify(mode) %>;
+  var AM_CALLER = <%- amCaller ? 'true' : 'false' %>;
+  var PEER_ONLINE = <%- peerOnline ? 'true' : 'false' %>;
+  var CALL_TYPE = <%- JSON.stringify(call.type) %>;
+  var IS_VIDEO = CALL_TYPE === 'video';
+  var ROLE = AM_CALLER ? 'caller' : 'callee';
+  var ME_ID = <%- JSON.stringify(me.id) %>;
+  var OTHER_ID = <%- JSON.stringify(otherId) %>;
+
+  var statusText=document.getElementById('statusText');
+  var timerEl=document.getElementById('timer');
+  var singleDp=document.getElementById('singleDp'), doubleDp=document.getElementById('doubleDp');
+  var incomingCtl=document.getElementById('incomingCtl');
+  var ringingCtl=document.getElementById('ringingCtl');
+  var answeredCtl=document.getElementById('answeredCtl');
+  var remoteAudio=document.getElementById('remoteAudio');
+  var remoteVideo=document.getElementById('remoteVideo');
+  var localVideo=document.getElementById('localVideo');
+  var videoLayer=document.getElementById('videoLayer');
+  var cwrap=document.getElementById('cwrap');
+
+  // ---- Socket.IO ----
+  var socket = window.ckSocket = window.ckSocket || (window.io ? io() : null);
+  if (socket) socket.emit('auth', ME_ID);
+
+  // ---- ringtone ----
+  var ac=null, ringGain=null, ringTimer=null;
+  function ensureAC(){ if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return ac; }
+  function playBoop(freq,dur){
+    var a=ensureAC(); if(!a) return;
+    var o=a.createOscillator(); var g=a.createGain();
+    o.frequency.value=freq; o.type='sine'; g.gain.value=0.0001;
+    o.connect(g); g.connect(ringGain||a.destination);
+    var t=a.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.25, t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.start(t); o.stop(t+dur+0.05);
+  }
+  function startRing(){
+    var a=ensureAC(); if(!a) return;
+    if(ringGain) return;
+    ringGain=a.createGain(); ringGain.gain.value=1; ringGain.connect(a.destination);
+    function beat(){ playBoop(480,0.25); setTimeout(function(){playBoop(620,0.25);},280); }
+    beat(); ringTimer=setInterval(beat,1400);
+  }
+  function stopRing(){
+    if(ringTimer){ clearInterval(ringTimer); ringTimer=null; }
+    if(ringGain){ try{ ringGain.disconnect(); }catch(e){} ringGain=null; }
+  }
+  document.addEventListener('click', function once(){
+    ensureAC(); if(ac && ac.state==='suspended') ac.resume();
+    document.removeEventListener('click', once);
+  });
+  if((MODE==='incoming') || (AM_CALLER && PEER_ONLINE)){
+    setTimeout(startRing, 50);
+  }
+
+  // ---- WebRTC (signalling via Socket.IO) ----
+  var pc=null, localStream=null, remoteStream=null;
+  var iceServers=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
+
+  async function ensureMedia(){
+    if(localStream) return localStream;
+    try{
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio:true,
+        video: IS_VIDEO ? {facingMode:'user'} : false
+      });
+      if(IS_VIDEO && localVideo){ try{ localVideo.srcObject = localStream; }catch(e){} }
+    }catch(e){
+      // fallback to audio-only if camera denied
+      if(IS_VIDEO){
+        try{ localStream = await navigator.mediaDevices.getUserMedia({audio:true}); }catch(e2){ localStream=null; }
+      } else { localStream=null; }
+    }
+    return localStream;
+  }
+
+  async function setupPC(){
+    if(pc) return pc;
+    pc = new RTCPeerConnection({iceServers:iceServers});
+    remoteStream = new MediaStream();
+    remoteAudio.srcObject = remoteStream;
+    if(IS_VIDEO) remoteVideo.srcObject = remoteStream;
+    pc.ontrack = function(ev){
+      ev.streams[0].getTracks().forEach(function(t){ remoteStream.addTrack(t); });
+      try{ remoteAudio.play(); }catch(e){}
+      if(IS_VIDEO){ try{ remoteVideo.play(); }catch(e){} }
+    };
+    pc.onicecandidate = function(ev){
+      if(ev.candidate && socket) socket.emit('call:ice', {to: OTHER_ID, callId: CALL_ID, candidate: ev.candidate.toJSON()});
+    };
+    var s = await ensureMedia();
+    if(s) s.getTracks().forEach(function(t){ pc.addTrack(t, s); });
+    return pc;
+  }
+
+  async function callerStart(){
+    await setupPC();
+    var offer = await pc.createOffer({offerToReceiveAudio:true, offerToReceiveVideo:IS_VIDEO});
+    await pc.setLocalDescription(offer);
+    if(socket) socket.emit('call:offer', {to: OTHER_ID, callId: CALL_ID, sdp: offer});
+  }
+
+  async function calleeAnswer(remoteOffer){
+    await setupPC();
+    await pc.setRemoteDescription(new RTCSessionDescription(remoteOffer));
+    var ans = await pc.createAnswer();
+    await pc.setLocalDescription(ans);
+    if(socket) socket.emit('call:answer', {to: OTHER_ID, callId: CALL_ID, sdp: ans});
+  }
+
+  if (socket) {
+    socket.on('call:offer', function(data){
+      if(!data || data.callId != CALL_ID || AM_CALLER) return;
+      calleeAnswer(data.sdp).catch(function(){});
+    });
+    socket.on('call:answer', function(data){
+      if(!data || data.callId != CALL_ID || !AM_CALLER || !pc) return;
+      pc.setRemoteDescription(new RTCSessionDescription(data.sdp)).catch(function(){});
+    });
+    socket.on('call:ice', function(data){
+      if(!data || data.callId != CALL_ID || !pc || !data.candidate) return;
+      pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(function(){});
+    });
+    socket.on('call:end', function(data){
+      if(!data || data.callId != CALL_ID) return;
+      goDone('Call ended');
+    });
+  }
+
+  // ---- state transitions ----
+  var callTimer=null, seconds=0, ended=false;
+  function fmt(s){var m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r;}
+  function showAnswered(){
+    stopRing();
+    singleDp.style.display='none';
+    doubleDp.style.display=IS_VIDEO?'none':'flex';
+    incomingCtl.style.display='none';
+    ringingCtl.style.display='none';
+    answeredCtl.style.display='flex';
+    statusText.textContent='In call';
+    if(IS_VIDEO){
+      videoLayer.classList.add('on');
+      cwrap.classList.add('overlay');
+    }
+    if(callTimer) clearInterval(callTimer);
+    callTimer=setInterval(function(){ seconds++; timerEl.textContent=fmt(seconds); },1000);
+    if(AM_CALLER){ callerStart().catch(function(){}); }
+  }
+  function goDone(msg){
+    if(ended) return; ended=true;
+    stopRing();
+    if(callTimer) clearInterval(callTimer);
+    try{ if(pc) pc.close(); }catch(e){}
+    try{ if(localStream) localStream.getTracks().forEach(function(t){t.stop();}); }catch(e){}
+    disableSpeaker();
+    statusText.textContent=msg||'Call ended';
+    setTimeout(function(){ location.href='/calls'; }, 900);
+  }
+
+  // ---- status poll (call state via server DB) ----
+  var pollTimer = setInterval(function(){
+    if(ended) return;
+    fetch('/call/ajax?action=poll&id='+CALL_ID, {credentials:'same-origin'})
+      .then(function(r){return r.json();}).then(function(j){
+        if(!j||!j.ok){ clearInterval(pollTimer); goDone('Call ended'); return; }
+        if(j.ended || j.status==='ended'){
+          clearInterval(pollTimer); goDone('Call ended'); return;
+        }
+        if(j.status==='answered'){
+          if(!answeredCtl.dataset.on){
+            answeredCtl.dataset.on='1';
+            seconds = parseInt(j.seconds||0,10);
+            showAnswered();
+          }
+        } else if(j.status==='missed'){
+          clearInterval(pollTimer); goDone(AM_CALLER?'No answer':'Call ended');
+        }
+      }).catch(function(){});
+  }, 1500);
+
+  if(AM_CALLER && MODE!=='incoming'){
+    setTimeout(function(){
+      if(!answeredCtl.dataset.on){
+        fetch('/call/ajax?action=reject&id='+CALL_ID,{credentials:'same-origin'}).finally(function(){ goDone('No answer'); });
+      }
+    }, 45000);
+  }
+
+  // ---- buttons ----
+  var btnAccept=document.getElementById('btnAccept');
+  if(btnAccept) btnAccept.addEventListener('click', async function(){
+    await ensureMedia();
+    var fd=new FormData(); fd.append('id',CALL_ID);
+    fetch('/call/ajax?action=accept',{method:'POST',body:fd,credentials:'same-origin'})
+      .then(function(){ answeredCtl.dataset.on='1'; showAnswered(); });
+  });
+  var btnReject=document.getElementById('btnReject');
+  if(btnReject) btnReject.addEventListener('click', function(){
+    var fd=new FormData(); fd.append('id',CALL_ID);
+    if(socket) socket.emit('call:end', {to: OTHER_ID, callId: CALL_ID});
+    fetch('/call/ajax?action=reject',{method:'POST',body:fd,credentials:'same-origin'})
+      .finally(function(){ goDone('Call rejected'); });
+  });
+  document.getElementById('btnCancel').addEventListener('click', function(){
+    var fd=new FormData(); fd.append('id',CALL_ID);
+    if(socket) socket.emit('call:end', {to: OTHER_ID, callId: CALL_ID});
+    fetch('/call/ajax?action=end',{method:'POST',body:fd,credentials:'same-origin'})
+      .finally(function(){ goDone('Cancelled'); });
+  });
+  document.getElementById('btnEnd').addEventListener('click', function(){
+    var fd=new FormData(); fd.append('id',CALL_ID);
+    if(socket) socket.emit('call:end', {to: OTHER_ID, callId: CALL_ID});
+    fetch('/call/ajax?action=end',{method:'POST',body:fd,credentials:'same-origin'})
+      .finally(function(){ goDone('Call ended'); });
+  });
+
+  if(AM_CALLER && MODE!=='incoming'){ ensureMedia(); }
+
+  // Mute
+  var muted=false;
+  document.getElementById('btnMute').addEventListener('click', function(){
+    muted=!muted;
+    if(localStream) localStream.getAudioTracks().forEach(function(t){t.enabled=!muted;});
+    this.classList.toggle('active',muted);
+    document.getElementById('muteLbl').textContent = muted?'Unmute':'Mute';
+  });
+
+  // Camera on/off (video calls only)
+  var btnVid=document.getElementById('btnVid');
+  if(btnVid){
+    var camOff=false;
+    btnVid.addEventListener('click', function(){
+      camOff=!camOff;
+      if(localStream) localStream.getVideoTracks().forEach(function(t){t.enabled=!camOff;});
+      this.classList.toggle('active',camOff);
+      document.getElementById('vidLbl').textContent = camOff?'Cam off':'Camera';
+    });
+  }
+
+  // ---- Speaker (loudspeaker vs earpiece) ----
+  var speaker=false, spkCtx=null, spkSrc=null;
+  function enableSpeaker(){
+    if(!remoteStream) return;
+    try{
+      if(!spkCtx) spkCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(spkCtx.state==='suspended') spkCtx.resume();
+      if(spkSrc){ try{ spkSrc.disconnect(); }catch(e){} }
+      spkSrc = spkCtx.createMediaStreamSource(remoteStream);
+      spkSrc.connect(spkCtx.destination);
+      remoteAudio.muted = true;
+    }catch(e){
+      // fallback: just raise element volume
+      try{ remoteAudio.volume = 1.0; }catch(e){}
+    }
+    // Try HDMI/loudspeaker sink where supported
+    try{
+      if(remoteAudio.setSinkId){ remoteAudio.setSinkId('default').catch(function(){}); }
+    }catch(e){}
+  }
+  function disableSpeaker(){
+    if(spkSrc){ try{ spkSrc.disconnect(); }catch(e){} spkSrc=null; }
+    try{ remoteAudio.muted = false; }catch(e){}
+  }
+  document.getElementById('btnSpk').addEventListener('click', function(){
+    speaker=!speaker;
+    this.classList.toggle('active',speaker);
+    document.getElementById('spkLbl').textContent = speaker?'Speaker on':'Speaker';
+    if(speaker) enableSpeaker(); else disableSpeaker();
+  });
+
+  // Add people — custom modal
+  var added=[]; var listEl=document.getElementById('addList');
+  var modal=document.getElementById('addModal');
+  var addInput=document.getElementById('addInput');
+  function openAdd(){ addInput.value=''; modal.classList.add('on'); setTimeout(function(){addInput.focus();},50); }
+  function closeAdd(){ modal.classList.remove('on'); }
+  document.getElementById('addPeopleBtn').addEventListener('click', openAdd);
+  document.getElementById('addCancel').addEventListener('click', closeAdd);
+  document.getElementById('addOk').addEventListener('click', function(){
+    var v=(addInput.value||'').trim(); if(!v){ closeAdd(); return; }
+    added.push(v);
+    listEl.innerHTML = added.map(function(n){return '＋ '+n.replace(/[<>&"]/g,'');}).join('<br>');
+    closeAdd();
+  });
+  addInput.addEventListener('keydown', function(e){
+    if(e.key==='Enter') document.getElementById('addOk').click();
+    else if(e.key==='Escape') closeAdd();
+  });
+  modal.addEventListener('click', function(e){ if(e.target===modal) closeAdd(); });
+
+  // clean up
+  window.addEventListener('beforeunload', function(){
+    stopRing();
+    try{
+      if(socket) socket.emit('call:end', {to: OTHER_ID, callId: CALL_ID});
+      var fd=new FormData(); fd.append('id',CALL_ID);
+      navigator.sendBeacon && navigator.sendBeacon('/call/ajax?action=end&id='+CALL_ID, fd);
+    }catch(e){}
+  });
+})();
+</script>
+</body></html>

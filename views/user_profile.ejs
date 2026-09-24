@@ -1,0 +1,29 @@
+<%- include('partials/head', { title: title, me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/chat/<%= uid %>" class="icon-btn back-btn">←</a><h1 style="font-size:18px">Profile</h1></div>
+
+<% if (alreadyReported) { %>
+  <div style="background:#dc2626;color:#fff;padding:10px 14px;text-align:center;font-size:13px">⚠ You reported this user</div>
+<% } %>
+
+<div class="profile-header">
+  <div class="avatar"><% if (u.avatar) { %><img src="<%= e(u.avatar) %>"><% } else { %><%= initial(u) %><% } %></div>
+  <h2><%= e(u.name || u.username) %><% if (u.blue_tick) { %><%- blueTickHtml() %><% } %></h2>
+  <div style="color:var(--muted);font-size:13px">@<%= e(u.username) %></div>
+  <% if (u.about) { %><p style="margin-top:14px"><%= e(u.about) %></p><% } %>
+</div>
+
+<% if (!isBroadcastBot) { %>
+<form method="post"><button class="list-row" name="action" value="<%= isBlocked ? 'unblock' : 'block' %>" style="width:100%;border:0;background:none;text-align:left;color:#dc2626"><span class="ico">🚫</span><div class="chat-meta"><div class="lr-title"><%= isBlocked ? 'Unblock user' : 'Block user' %></div></div></button></form>
+<form method="post" onsubmit="return confirm('Clear all chat with this user?')"><button class="list-row" name="action" value="clear" style="width:100%;border:0;background:none;text-align:left;color:#dc2626"><span class="ico">🗑️</span><div class="chat-meta"><div class="lr-title">Clear chat</div></div></button></form>
+
+<form method="post" style="padding:14px;border-top:1px solid var(--border);margin-top:10px">
+  <input type="hidden" name="action" value="report">
+  <div style="font-weight:600;margin-bottom:8px;color:#dc2626">Report user</div>
+  <textarea name="reason" class="input" placeholder="Reason for reporting..." rows="3" required style="margin-bottom:10px"></textarea>
+  <button class="btn" style="background:#dc2626">Submit report</button>
+</form>
+<% } else { %>
+<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">📢 Official broadcast channel</div>
+<% } %>
+</div></body></html>

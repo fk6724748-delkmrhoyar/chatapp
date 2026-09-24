@@ -1,0 +1,92 @@
+<%- include('partials/head', { title: g.name, me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/group/<%= gid %>" class="icon-btn back-btn">←</a><h1 style="font-size:18px">Group info</h1></div>
+
+<div class="profile-header">
+  <div class="avatar"><% if (g.avatar) { %><img src="<%= e(g.avatar) %>"><% } else { %>👥<% } %></div>
+  <h2><%= e(g.name) %></h2>
+  <div style="color:var(--muted)"><%= members.length %> members</div>
+  <% if (g.description) { %><p style="margin-top:10px"><%= e(g.description) %></p><% } %>
+</div>
+
+<% if (isOwner) { %>
+<form method="post" enctype="multipart/form-data" style="padding:14px;border-top:1px solid var(--border)">
+  <input type="hidden" name="action" value="edit">
+  <div style="font-weight:600;margin-bottom:8px">Edit group</div>
+  <input class="input" name="name" value="<%= e(g.name) %>" style="margin-bottom:8px">
+  <textarea class="input" name="description" rows="2" style="margin-bottom:8px"><%= e(g.description) %></textarea>
+  <label class="input" style="display:block;text-align:center;cursor:pointer;margin-bottom:8px">📷 Change photo<input type="file" name="avatar" hidden></label>
+  <button class="btn">Save</button>
+</form>
+<% } %>
+
+<% if (isAdmin) { %>
+<form method="post" style="padding:14px;border-top:1px solid var(--border)">
+  <input type="hidden" name="action" value="set_perm">
+  <div style="font-weight:600;margin-bottom:8px">Who can send messages?</div>
+  <label style="display:flex;align-items:center;gap:8px"><input type="radio" name="only_admin_msg" value="0" <%= !g.only_admin_msg?'checked':'' %> onchange="this.form.submit()"> Everyone</label>
+  <label style="display:flex;align-items:center;gap:8px;margin-top:6px"><input type="radio" name="only_admin_msg" value="1" <%= g.only_admin_msg?'checked':'' %> onchange="this.form.submit()"> Only admins (me)</label>
+</form>
+<% } %>
+
+<div style="padding:14px 14px 4px;font-weight:700;border-top:1px solid var(--border)">Members (<%= members.length %>)</div>
+<% members.forEach(function(m){ const init = String(m.name||m.email||'?').charAt(0).toUpperCase(); %>
+  <div class="chat-item">
+    <div class="avatar"><% if (m.avatar) { %><img src="<%= e(m.avatar) %>"><% } else { %><%= init %><% } %></div>
+    <div class="chat-meta">
+      <div class="chat-name"><%= e(m.name || m.username) %><% if (m.blue_tick) { %><%- blueTickHtml() %><% } %>
+        <% if (m.id == g.owner_id) { %> <span style="font-size:10px;background:var(--primary-soft);color:var(--primary);padding:2px 6px;border-radius:8px">owner</span>
+        <% } else if (m.is_admin) { %> <span style="font-size:10px;background:var(--surface);color:var(--muted);padding:2px 6px;border-radius:8px">admin</span><% } %>
+      </div>
+      <div class="chat-preview">@<%= e(m.username) %></div>
+    </div>
+    <% if (isAdmin && m.id != g.owner_id && m.id != me.id) { %>
+    <form method="post" onsubmit="return confirm('Remove this member?')">
+      <input type="hidden" name="action" value="remove">
+      <input type="hidden" name="user_id" value="<%= m.id %>">
+      <button class="icon-btn" style="color:#dc2626">✕</button>
+    </form>
+    <% } %>
+  </div>
+<% }); %>
+
+<% if (isAdmin) { %>
+<div style="padding:14px;border-top:1px solid var(--border)">
+  <% if (flashErr) { %>
+    <div class="alert danger-bg" style="margin-bottom:10px"><%= e(flashErr) %></div>
+  <% } %>
+  <% const __full = members.length >= 1000; %>
+  <% if (__full) { %>
+    <div class="alert danger-bg" style="margin-bottom:10px">Limit full — this group already has 1000 members (max).</div>
+  <% } %>
+  <div style="font-weight:700;margin-bottom:8px">Add member</div>
+  <form method="get" style="display:flex;gap:8px;margin-bottom:10px">
+    <input type="hidden" name="id" value="<%= gid %>">
+    <input class="input" name="addq" value="<%= e(addq) %>" placeholder="Search by name, username, email or phone" autocomplete="off" style="flex:1">
+    <button class="btn" style="width:auto;padding:10px 14px">Search</button>
+  </form>
+  <% if (addq!=='' && !nonMembers.length) { %>
+    <div style="color:var(--muted);font-size:13px">No matching users found.</div>
+  <% } %>
+  <% nonMembers.forEach(function(u){ const init = String(u.name||u.email||'?').charAt(0).toUpperCase(); %>
+    <div class="chat-item" style="padding:8px 0">
+      <div class="avatar"><% if (u.avatar) { %><img src="<%= e(u.avatar) %>"><% } else { %><%= init %><% } %></div>
+      <div class="chat-meta">
+        <div class="chat-name"><%= e(displayName(u)) %></div>
+        <div class="chat-preview">@<%= e(u.username || ('user'+u.id)) %></div>
+      </div>
+      <form method="post" style="margin:0">
+        <input type="hidden" name="action" value="add">
+        <input type="hidden" name="user_id" value="<%= u.id %>">
+        <button class="btn" style="width:auto;padding:8px 14px" <%= __full?'disabled':'' %>>Add</button>
+      </form>
+    </div>
+  <% }); %>
+</div>
+<% } %>
+
+<form method="post" style="padding:14px;border-top:1px solid var(--border)" onsubmit="return confirm('Leave group?')">
+  <input type="hidden" name="action" value="leave">
+  <button class="btn" style="background:#dc2626">Leave group</button>
+</form>
+</div></body></html>

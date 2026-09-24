@@ -1,0 +1,26 @@
+<%- include('partials/head', { title: title, me: me }) %>
+<div class="app">
+<div class="topbar"><a href="/chats" class="icon-btn">←</a><h1 style="font-size:18px">Settings</h1></div>
+<form method="post" enctype="multipart/form-data">
+<div class="profile-header"><label style="cursor:pointer"><div class="avatar"><% if (me.avatar) { %><img src="<%= e(me.avatar) %>"><% } else { %><%= initial(me) %><% } %></div><div style="margin-top:8px;color:var(--primary)">Edit photo</div><input type="file" name="avatar" hidden></label></div>
+<div style="padding:0 20px"><label style="display:block;margin-bottom:12px"><div style="font-size:12px;color:var(--muted)">Username</div><input class="input" name="username" value="<%= e(me.username) %>"></label>
+<label style="display:block;margin-bottom:12px"><div style="font-size:12px;color:var(--muted)">Name</div><input class="input" name="name" value="<%= e(me.name) %>"></label>
+<label style="display:block;margin-bottom:12px"><div style="font-size:12px;color:var(--muted)">About</div><input class="input" name="about" value="<%= e(me.about) %>"></label>
+<label style="display:block;margin-bottom:12px"><div style="font-size:12px;color:var(--muted)">Phone (cannot change)</div><input class="input" value="<%= e(me.phone) %>" disabled></label>
+<label style="display:block;margin-bottom:12px"><div style="font-size:12px;color:var(--muted)">Email (cannot change)</div><input class="input" value="<%= e(me.email) %>" disabled></label>
+<label class="list-row" style="padding:10px 0;border:0"><span class="ico">🌙</span><div class="chat-meta"><div class="lr-title">Dark mode</div></div><input type="checkbox" name="dark_mode" <%= me.dark_mode ? 'checked' : '' %>></label>
+<label class="list-row" style="padding:10px 0;border:0"><span class="ico">🔒</span><div class="chat-meta"><div class="lr-title">Private account</div><div class="chat-preview" style="font-size:11px;color:var(--muted)">When on, no one can add you to any group.</div></div><input type="checkbox" name="is_private" <%= me.is_private ? 'checked' : '' %>></label>
+<button class="btn">Save profile</button></div></form>
+<div style="padding:20px"><h3 style="margin-bottom:10px">Chat wallpaper</h3>
+<form method="post" enctype="multipart/form-data"><input type="hidden" name="wallpaper" value="1"><input type="file" name="wallpaper" class="input"><button class="btn" style="margin-top:8px">Upload wallpaper</button></form></div>
+<a href="/verify-request" class="list-row"><span class="ico">✓</span><div><div class="lr-title">Request blue tick verification</div></div></a>
+<a href="<%= e(setting('support_link','/support')) %>" class="list-row"><span class="ico">🎫</span><div><div class="lr-title">Support Center</div></div></a>
+<div style="padding:20px"><h3 style="margin-bottom:10px">Support ticket</h3>
+<form method="post">
+<input class="input" name="title" placeholder="Title" required style="margin-bottom:8px">
+<textarea class="input" name="description" placeholder="Describe your issue" rows="3" required></textarea>
+<button class="btn" style="margin-top:8px">Send ticket</button></form></div>
+<a href="/logout" class="list-row danger"><span class="ico">⎋</span><div><div class="lr-title">Logout</div></div></a>
+<form method="post" style="padding:20px" onsubmit="return confirm('Delete your account permanently?')"><button class="btn danger-bg" name="delete_account" value="1">Delete Account</button></form>
+<div style="padding:20px;color:var(--muted);text-align:center;font-size:12px">Made by ck</div>
+</div></body></html>

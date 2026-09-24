@@ -1,0 +1,273 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
+<title><%= e(peer.name) %></title><meta http-equiv="Permissions-Policy" content="microphone=(self), camera=(self), microphone=*, camera=*"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script><script src="/socket.io/socket.io.js"></script>
+<style>
+/* WhatsApp-style mobile-safe chat layout (scoped to chat page) */
+html,body{height:100%;overflow:hidden}
+.app{max-width:480px;margin:0 auto;background:var(--bg);position:relative;
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;
+  padding-bottom:0 !important;
+  overflow:hidden;
+}
+.app > .topbar{position:relative;top:auto;flex:0 0 auto}
+.app > .chat-bg{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:14px}
+.app > .compose,
+.app > form.compose{position:relative;left:auto;right:auto;bottom:auto;max-width:none;margin:0;
+  flex:0 0 auto;width:100%;
+  padding:8px calc(8px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  box-sizing:border-box;
+}
+.app > .compose > *{flex-shrink:0}
+.app > .compose input[type=text],
+.app > .compose textarea{flex:1 1 auto;min-width:0;font-size:16px} /* 16px prevents iOS zoom */
+.app > .compose{align-items:flex-end}
+.app > .compose textarea{border:1px solid var(--border);border-radius:20px;padding:10px 14px;outline:0;font-family:inherit;line-height:1.35;resize:none;max-height:140px;overflow-y:auto;background:var(--surface,#fff);color:inherit;box-sizing:border-box}
+.app > .compose .icon-btn,.app > .compose .send{align-self:flex-end}
+.app > .compose .send{flex:0 0 42px}
+#recIndicator{position:absolute !important;bottom:60px}
+</style>
+</head>
+<body<%- (me && me.dark_mode) ? ' class="dark"' : '' %>><div class="app chat-shell">
+<div class="topbar">
+  <a href="/chats" class="icon-btn back-btn">←</a>
+  <a href="/user/<%= peer.id %>" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex:1">
+    <div class="avatar" style="width:38px;height:38px;font-size:14px"><% if (peer.avatar) { %><img src="<%= e(peer.avatar) %>"><% } else { %><%= initial(peer) %><% } %></div>
+    <div><div style="font-weight:600"><%= e(peer.name || peer.email) %><% if (peer.blue_tick) { %><%- blueTickHtml() %><% } %></div>
+    <div style="font-size:11px;color:var(--muted)"><%= isBroadcastBot ? 'Broadcast' : (online ? 'online' : 'last seen ' + timeAmPm(peer.last_seen)) %></div></div>
+  </a>
+  <% if (!isBroadcastBot) { %>
+  <a class="icon-btn" href="/chat/<%= uid %>?call=video" title="Video call" aria-label="Video call">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11z"/></svg>
+  </a>
+  <a class="icon-btn" href="/chat/<%= uid %>?call=voice" title="Voice call" aria-label="Voice call">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.5 11.5 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.5 11.5 0 0 0 .57 3.6 1 1 0 0 1-.25 1z"/></svg>
+  </a>
+  <% } %>
+  <a class="icon-btn" href="/user/<%= uid %>">⋮</a>
+</div>
+<div class="chat-bg" id="bg" <% if (me.wallpaper) { %>style="background-image:linear-gradient(rgba(245,248,255,.72),rgba(245,248,255,.72)),url('<%= e(me.wallpaper) %>');background-size:cover;background-position:center"<% } %>>
+  <% var lastDay = ''; msgs.forEach(function(m){ var day = dayKey(m.created_at); if (day !== lastDay) { lastDay = day; %>
+    <div style="text-align:center;margin:10px 0"><span style="background:#fff;padding:4px 10px;border-radius:10px;font-size:11px;color:var(--muted)"><%= dayLabel(m.created_at) %></span></div>
+  <% } var out = m.sender_id === me.id;
+    var tickHtml = '';
+    if (out) {
+      if (m.seen) tickHtml = '<span class="tick seen">✓✓</span>';
+      else if (m.delivered) tickHtml = '<span class="tick delivered">✓✓</span>';
+      else tickHtml = '<span class="tick">✓</span>';
+    }
+    var att = m.attachment || '';
+    var kind = att ? attachmentKind(att) : '';
+    var isAudio = kind === 'audio', isVid = kind === 'video', isImg = kind === 'image';
+  %>
+  <div class="msg <%= out ? 'out' : 'in' %>" data-mid="<%= m.id %>">
+    <% if (att && isAudio) {
+      var vaName = out ? (me.name || me.email) : (peer.name || peer.email);
+      var vaInit = (vaName || '?').charAt(0).toUpperCase();
+      var vaImg = out ? (me.avatar || '') : (peer.avatar || '');
+    %>
+      <div class="voice-msg">
+        <div class="voice-dp"><% if (vaImg) { %><img src="<%= e(vaImg) %>"><% } else { %><%= vaInit %><% } %></div>
+        <audio controls src="<%= e(att) %>"></audio>
+      </div>
+    <% } else if (att && isVid) { %>
+      <video controls src="<%= e(att) %>" style="max-width:100%;border-radius:8px;margin-bottom:6px"></video>
+    <% } else if (att && isImg) { %>
+      <a href="<%= e(att) %>" download><img src="<%= e(att) %>" style="max-width:100%;border-radius:8px;margin-bottom:6px"></a>
+    <% } else if (att) { %>
+      <a href="<%= e(att) %>" download class="link">📎 Attachment</a>
+    <% } %>
+    <%- nl2brLinkify(m.body) %>
+    <span class="time"><%= timeAmPm(m.created_at) %> <%- tickHtml %></span>
+  </div>
+  <% }); %>
+</div>
+
+<% if (isBroadcastBot) { %>
+  <div class="compose" style="justify-content:center;color:var(--muted);font-size:13px">📢 Only admin can send messages here</div>
+<% } else if (isBlockedByMe) { %>
+  <div class="compose" style="justify-content:center;color:var(--muted);font-size:13px">You blocked this user. <a href="/user/<%= uid %>" style="margin-left:6px">Unblock</a></div>
+<% } else if (isBlockedByThem) { %>
+  <div class="compose" style="justify-content:center;color:var(--muted);font-size:13px">You can't message this user.</div>
+<% } else { %>
+<div id="chatAttPreview" style="display:none;padding:6px 10px;background:var(--panel,#f1f5f9);border-top:1px solid #e2e8f0"><div style="display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:4px 8px"><img id="chatAttThumb" src="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;display:none"><span id="chatAttName" style="font-size:12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><button type="button" id="chatAttClear" style="background:none;border:none;font-size:18px;cursor:pointer;color:#dc2626">×</button></div></div>
+<form class="compose" method="post" enctype="multipart/form-data" id="composeForm">
+  <label class="icon-btn">📎<input type="file" id="chatAtt" name="attachment" accept="*/*" hidden></label>
+  <label class="icon-btn">📷<input type="file" id="chatCam" name="attachment_cam" accept="image/*,video/*" capture="environment" hidden></label>
+  <textarea name="body" id="msgInput" placeholder="Message" autocomplete="off" rows="1"></textarea>
+  <button class="send" id="sendBtn" type="submit" style="display:none" aria-label="Send">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2.01 21l20.99-9L2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+  <button class="send" id="micBtn" type="button" title="Tap to record" aria-label="Record voice">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+  </button>
+</form>
+<div id="recIndicator" style="display:none;position:fixed;left:0;right:0;bottom:60px;padding:10px 14px;background:#dc2626;color:#fff;text-align:center;font-size:13px;z-index:99">
+  <span class="rec-dot"></span> Recording <span id="recTime">0:00</span> — tap mic to send
+</div>
+<style>
+  .voice-msg{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .voice-dp{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;overflow:hidden;flex-shrink:0}
+  .voice-dp img{width:100%;height:100%;object-fit:cover}
+  .voice-msg audio{max-width:220px;height:36px}
+  .rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#fff;margin-right:6px;animation:recpulse 1s infinite}
+  @keyframes recpulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .send.sending{animation:sendfly .35s ease-out forwards}
+  @keyframes sendfly{to{transform:translate(20px,-20px) scale(.6);opacity:0}}
+  #micBtn.recording{background:#dc2626}
+</style>
+<script>
+(function(){
+  var input=document.getElementById('msgInput');
+  var send=document.getElementById('sendBtn');
+  var mic=document.getElementById('micBtn');
+  var form=document.getElementById('composeForm');
+  var ind=document.getElementById('recIndicator');
+  var recTime=document.getElementById('recTime');
+  var att=document.getElementById('chatAtt');
+  var cam=document.getElementById('chatCam');
+  var pv=document.getElementById('chatAttPreview');
+  var th=document.getElementById('chatAttThumb');
+  var nm=document.getElementById('chatAttName');
+  var cl=document.getElementById('chatAttClear');
+  function hasFile(){ return (att.files&&att.files[0])||(cam.files&&cam.files[0]); }
+  function sync(){
+    if(input.value.trim().length>0 || hasFile()){ send.style.display=''; mic.style.display='none'; }
+    else { send.style.display='none'; mic.style.display=''; }
+  }
+  function autogrow(){ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,140)+'px'; }
+  input.addEventListener('input',function(){ autogrow(); sync(); });
+  input.addEventListener('keydown',function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); if(input.value.trim().length>0 || hasFile()) form.submit(); } });
+  autogrow();
+  function showPreview(f){
+    if(!f){ pv.style.display='none'; th.src=''; th.style.display='none'; sync(); return; }
+    nm.textContent=f.name; pv.style.display='block';
+    if(f.type.indexOf('image/')===0){ th.src=URL.createObjectURL(f); th.style.display='inline-block'; } else { th.style.display='none'; }
+    sync();
+  }
+  att.addEventListener('change',function(){ if(att.files&&att.files[0]){ cam.value=''; showPreview(att.files[0]); } });
+  cam.addEventListener('change',function(){ if(cam.files&&cam.files[0]){ att.value=''; showPreview(cam.files[0]); } });
+  cl.addEventListener('click',function(){ att.value=''; cam.value=''; showPreview(null); });
+  sync();
+
+  form.addEventListener('submit',function(){
+    if(input.value.trim().length>0){ send.classList.add('sending'); }
+  });
+
+  var rec=null, chunks=[], stream=null, recording=false, timer=null, secs=0;
+  function fmt(s){ var m=Math.floor(s/60), r=s%60; return m+':'+(r<10?'0':'')+r; }
+  mic.addEventListener('click', async function(){
+    if(!navigator.mediaDevices || !window.MediaRecorder){ alert('Voice recording not supported'); return; }
+    if(!recording){
+      try{ stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+      catch(e){ alert('Microphone permission denied'); return; }
+      var mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : (MediaRecorder.isTypeSupported('audio/mp4')?'audio/mp4':'');
+      try{ rec = mime? new MediaRecorder(stream,{mimeType:mime}) : new MediaRecorder(stream); }
+      catch(e){ rec = new MediaRecorder(stream); }
+      chunks=[];
+      rec.ondataavailable=function(e){ if(e.data && e.data.size>0) chunks.push(e.data); };
+      rec.onstop=function(){
+        if(stream){ stream.getTracks().forEach(function(t){t.stop();}); }
+        ind.style.display='none'; mic.classList.remove('recording');
+        clearInterval(timer); secs=0; recTime.textContent='0:00';
+        if(chunks.length===0) return;
+        var blob = new Blob(chunks, {type: rec.mimeType||'audio/webm'});
+        if(blob.size<1024){ return; }
+        var ext = (rec.mimeType||'').indexOf('mp4')>=0 ? 'm4a' : 'webm';
+        var fd = new FormData();
+        fd.append('body','');
+        fd.append('attachment', blob, 'voice_'+Date.now()+'.'+ext);
+        mic.classList.add('sending');
+        fetch(window.location.href,{method:'POST',body:fd,credentials:'same-origin'}).then(function(){ location.reload(); }).catch(function(){ alert('Voice send failed'); mic.classList.remove('sending'); });
+      };
+      rec.start(); recording=true;
+      ind.style.display=''; mic.classList.add('recording');
+      secs=0; recTime.textContent='0:00';
+      timer=setInterval(function(){ secs++; recTime.textContent=fmt(secs); },1000);
+    } else {
+      recording=false;
+      try{ rec.stop(); }catch(e){}
+    }
+  });
+})();
+</script>
+<% } %>
+<script>const bg=document.getElementById('bg');if(bg)bg.scrollTop=bg.scrollHeight;</script>
+<script>
+(function(){
+  var bg=document.getElementById('bg'); if(!bg) return;
+  var peerId=<%= uid %>;
+  function lastId(){
+    var els=bg.querySelectorAll('.msg[data-mid]');
+    var mx=0; els.forEach(function(el){var v=parseInt(el.getAttribute('data-mid')||'0',10); if(v>mx) mx=v;});
+    return mx;
+  }
+  function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function linkify(s){return esc(s).replace(/(https?:\/\/\S+)/gi,'<a class="link" href="$1" target="_blank">$1</a>').replace(/\n/g,'<br>');}
+  var lastDay='';
+  // seed lastDay from existing headers - use last one
+  (function(){var chips=bg.querySelectorAll('.chat-bg > div > span'); /* not reliable */})();
+  function renderMsg(m){
+    var wrap=document.createElement('div');
+    wrap.className='msg '+(m.out?'out':'in');
+    wrap.setAttribute('data-mid',m.id);
+    var html='';
+    if(m.attachment){
+      if(m.kind==='audio'){
+        html+='<div class="voice-msg"><div class="voice-dp">🎤</div><audio controls src="'+esc(m.attachment)+'"></audio></div>';
+      } else if(m.kind==='video'){
+        html+='<video controls src="'+esc(m.attachment)+'" style="max-width:100%;border-radius:8px;margin-bottom:6px"></video>';
+      } else if(m.kind==='image'){
+        html+='<a href="'+esc(m.attachment)+'" download><img src="'+esc(m.attachment)+'" style="max-width:100%;border-radius:8px;margin-bottom:6px"></a>';
+      } else {
+        html+='<a href="'+esc(m.attachment)+'" download class="link">📎 Attachment</a>';
+      }
+    }
+    html+=linkify(m.body||'');
+    var tick=''; if(m.out){ tick = m.seen?'<span class="tick seen">✓✓</span>':(m.delivered?'<span class="tick delivered">✓✓</span>':'<span class="tick">✓</span>'); }
+    html+='<span class="time">'+esc(m.time)+' '+tick+'</span>';
+    wrap.innerHTML=html;
+    return wrap;
+  }
+  var seenDays={};
+  bg.querySelectorAll('.msg[data-mid]').forEach(function(){});
+  function nearBottom(){ return (bg.scrollTop+bg.clientHeight) >= (bg.scrollHeight-80); }
+  function poll(){
+    var since=lastId();
+    fetch('/chat/'+peerId+'/poll?since='+since,{credentials:'same-origin'})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d||!d.ok) return;
+        var stick=nearBottom();
+        (d.messages||[]).forEach(function(m){
+          if(bg.querySelector('.msg[data-mid="'+m.id+'"]')) return;
+          if(!seenDays[m.day] && !document.querySelector('[data-day="'+m.day+'"]')){
+            var dd=document.createElement('div');
+            dd.setAttribute('data-day',m.day);
+            dd.style.cssText='text-align:center;margin:10px 0';
+            dd.innerHTML='<span style="background:#fff;padding:4px 10px;border-radius:10px;font-size:11px;color:var(--muted)">'+esc(m.dayLabel)+'</span>';
+            bg.appendChild(dd); seenDays[m.day]=1;
+          }
+          bg.appendChild(renderMsg(m));
+        });
+        // update ticks
+        (d.ticks||[]).forEach(function(t){
+          var el=bg.querySelector('.msg.out[data-mid="'+t.id+'"] .tick');
+          if(el){ el.className='tick'+(parseInt(t.seen)?' seen':(parseInt(t.delivered)?' delivered':'')); el.textContent = (parseInt(t.seen)||parseInt(t.delivered))?'✓✓':'✓'; }
+        });
+        if(stick) bg.scrollTop=bg.scrollHeight;
+      }).catch(function(){});
+  }
+  setInterval(poll, 2500);
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden) poll(); });
+  // realtime: instant refresh on socket message push (in addition to polling)
+  if (window.io) {
+    window.ckSocket = window.ckSocket || io();
+    window.ckSocket.emit('auth', <%= me.id %>);
+    window.ckSocket.on('message:new', function(m){
+      if (!m || m.senderId != peerId) return;
+      poll();
+    });
+  }
+})();
+</script>
+</div><script src="/assets/emoji.js?v=5"></script></body></html>

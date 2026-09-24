@@ -1,0 +1,23 @@
+<%- include('partials/head', { title: title, me: me }) %>
+<body><div class="app">
+<div class="topbar"><h1>Set up profile</h1></div>
+<form method="post" action="/profile-setup" enctype="multipart/form-data" style="padding:20px">
+  <div class="profile-header">
+    <label style="cursor:pointer">
+      <div class="avatar" style="width:130px;height:130px;font-size:48px;margin:0 auto"><% if (me.avatar) { %><img src="<%= e(me.avatar) %>"><% } else { %><%= initial(me) %><% } %></div>
+      <div style="margin-top:8px;color:var(--primary)">Change photo</div>
+      <input type="file" name="avatar" accept="image/*" hidden>
+    </label>
+  </div>
+  <% if (error) { %><div class="alert danger-bg"><%= e(error) %></div><% } %>
+  <label style="display:block;margin-bottom:14px"><div style="color:var(--muted);font-size:12px">Username</div>
+    <input class="input" name="username" value="<%= e(me.username) %>" required placeholder="username"></label>
+  <label style="display:block;margin-bottom:14px"><div style="color:var(--muted);font-size:12px">Name</div>
+    <input class="input" name="name" value="<%= e(me.name) %>" required></label>
+  <label style="display:block;margin-bottom:14px"><div style="color:var(--muted);font-size:12px">Phone</div>
+    <input class="input" name="phone" value="<%= e(me.phone) %>"></label>
+  <label style="display:block;margin-bottom:20px"><div style="color:var(--muted);font-size:12px">About</div>
+    <input class="input" name="about" value="<%= e(me.about) %>" placeholder="Hey there! I'm using CK Chat"></label>
+  <button class="btn">Continue</button>
+</form>
+</div></body></html>

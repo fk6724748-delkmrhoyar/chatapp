@@ -1,0 +1,43 @@
+<%- include('partials/head', { title: title }) %><div class="app">
+<div class="topbar">
+  <h1><%= app_name %></h1>
+  <div class="icons">
+    <a href="/camera" class="icon-btn">📷</a>
+    <a href="/menu" class="icon-btn">⋮</a>
+  </div>
+</div>
+<form class="search" method="get" action="/search">
+  <span>🔍</span><input name="q" placeholder="Search users by name" value="<%= e(q) %>">
+</form>
+<div class="filters">
+  <span class="filter active">All</span>
+  <span class="filter">Unread</span>
+  <span class="filter">Groups</span>
+</div>
+<% if (!chats.length && !groups.length) { %><div class="empty">No chats yet. Tap the button to start a chat.</div><% } %>
+<% groups.forEach(function(g){ %>
+<a href="/group/<%= g.id %>" class="chat-item" style="text-decoration:none;color:inherit">
+  <div class="avatar"><% if (g.avatar) { %><img src="<%= e(g.avatar) %>"><% } else { %>👥<% } %></div>
+  <div class="chat-meta"><div class="chat-name"><%= e(g.name) %></div><div class="chat-preview"><%= e((g.last_msg != null ? g.last_msg : g.description || '').toString().substring(0,50)) %></div></div>
+  <div class="chat-side">
+    <%= g.last_t ? timeAmPm(g.last_t) : '' %>
+    <% if (g.unread && g.unread > 0) { %><div class="badge badge-green"><%= g.unread %></div><% } %>
+  </div>
+</a>
+<% }); %>
+<% chats.forEach(function(c){ var init = (c.name || c.email || '?').charAt(0).toUpperCase(); %>
+<a href="/chat/<%= c.id %>" class="chat-item" style="text-decoration:none;color:inherit">
+  <div class="avatar"><% if (c.avatar) { %><img src="<%= e(c.avatar) %>"><% } else { %><%= init %><% } %></div>
+  <div class="chat-meta">
+    <div class="chat-name"><%= e(c.name || c.email) %><% if (c.blue_tick) { %><%- blueTickHtml() %><% } %></div>
+    <div class="chat-preview"><%= e((c.last_msg || '').toString().substring(0,50)) %></div>
+  </div>
+  <div class="chat-side">
+    <%= c.last_t ? timeAmPm(c.last_t) : '' %>
+    <% if (c.unread > 0) { %><div class="badge badge-green"><%= c.unread %></div><% } %>
+  </div>
+</a>
+<% }); %>
+<a href="/contacts" class="fab">✎</a>
+<%- include('partials/nav', { tab: 'chats' }) %>
+</div></body></html>
