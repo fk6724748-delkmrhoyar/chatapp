@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="/assets/style.css"><script src="/assets/app.js" defer></script></head><body><div class="app">
+<div class="topbar"><a href="/ckmr/" class="icon-btn back-btn">←</a><h1 style="font-size:18px">Users</h1></div>
+
+<form method="post" action="/ckmr/users" style="padding:14px;background:var(--primary-soft);margin:14px;border-radius:10px">
+  <div style="font-weight:700;margin-bottom:8px">Grant blue tick to user (username, email, or name)</div>
+  <div style="display:flex;gap:8px">
+    <input class="input" name="grant_username" placeholder="username / email / name" required style="flex:1">
+    <button class="btn" style="width:auto;padding:10px 14px">Grant ✓</button>
+  </div>
+  <% if (query.granted) { %><div style="color:#166534;margin-top:8px">✓ Blue tick granted to <%= e(query.granted) %></div><% } %>
+  <% if (grant_msg) { %><div style="color:#b91c1c;margin-top:8px"><%- grant_msg %></div><% } %>
+</form>
+
+<form method="post" action="/ckmr/users" style="padding:14px;background:var(--primary-soft);margin:14px;border-radius:10px">
+  <div style="font-weight:700;margin-bottom:8px">Grant blue tick to channel (channel name)</div>
+  <div style="display:flex;gap:8px">
+    <input class="input" name="grant_channel" placeholder="channel name" required style="flex:1">
+    <button class="btn" style="width:auto;padding:10px 14px">Grant ✓</button>
+  </div>
+  <% if (query.cgranted) { %><div style="color:#166534;margin-top:8px">✓ Blue tick granted to channel <%= e(query.cgranted) %></div><% } %>
+</form>
+
+<form class="search" method="get" action="/ckmr/users"><span>🔍</span><input name="q" value="<%= e(q) %>" placeholder="Search name, username or email"></form>
+
+<% users.forEach(function(u){ %>
+<div class="chat-item">
+  <div class="avatar"><% if (u.avatar) { %><img src="/<%= e(u.avatar) %>"><% } else { %><%= String(u.email).charAt(0).toUpperCase() %><% } %></div>
+  <div class="chat-meta">
+    <div class="chat-name"><%= e(displayName(u)) %><% if (u.blue_tick) { %> <%- blueTickHtml() %><% } %><% if (u.banned) { %> <span class="danger">[BANNED]</span><% } %></div>
+    <div class="chat-preview">@<%= e(u.username || ('user' + u.id)) %> · <%= e(u.email) %> · <%= e(u.phone) %></div>
+  </div>
+  <div class="chat-side" style="font-size:11px">
+    <% if (u.blue_tick) { %><a href="/ckmr/users?revoke_tick=<%= u.id %>" class="danger">−✓</a><% } else { %><a href="/ckmr/users?grant_tick=<%= u.id %>" class="link">+✓</a><% } %>
+    · <% if (u.banned) { %><a href="/ckmr/users?unban=<%= u.id %>" class="link">Unban</a><% } else { %><a href="/ckmr/users?ban=<%= u.id %>" class="danger">Ban</a><% } %>
+    · <a href="/ckmr/users?clear=<%= u.id %>" class="danger" onclick="return confirm('Clear all chats?')">Clear</a>
+  </div>
+</div>
+<% }); %>
+</div></body></html>
